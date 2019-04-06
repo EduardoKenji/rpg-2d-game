@@ -2,4 +2,4 @@
 
 Work in progress.
 
-A rogue-like 2D RPG game.
+A rogue-like 2D RPG game prototype.
