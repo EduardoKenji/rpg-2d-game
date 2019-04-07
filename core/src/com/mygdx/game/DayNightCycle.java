@@ -6,7 +6,7 @@ public class DayNightCycle {
     float minutes;
     int hours;
 
-    final float maximumRGBValue = 0.93f;
+    final float maximumRGBValue = 0.89f;
     final float totalHours = 24;
 
     float timer;
@@ -37,7 +37,7 @@ public class DayNightCycle {
     }
 
     public void updateTime() {
-        setMinutes(getMinutes() + (Gdx.graphics.getDeltaTime()));
+        setMinutes(getMinutes() + (Gdx.graphics.getDeltaTime() * 50));
         if(this.hours >= 24) {
             this.hours = 0;
         }

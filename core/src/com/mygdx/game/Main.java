@@ -19,13 +19,14 @@ import java.util.HashMap;
 
 public class Main extends ApplicationAdapter implements InputProcessor {
 
-
+	// Frame buffer to update and draw lights
 	FrameBuffer frameBuffer;
+	// Spritebatch to draw sprites, texts (with fonts), textures, and so forth
 	SpriteBatch spriteBatch;
+	// Camera to follow the player
 	OrthographicCamera camera;
-
-	Texture texture,texture1;
-
+	// Textures
+	Texture background;
 	// Class that takes care of day-time calculations
 	DayNightCycle dayNightCycle;
 	// Player
@@ -64,9 +65,9 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		lightArrayList.add(new Light(new Sprite(new Texture("textures/fire_light.png")), new Rectangle(0, 0, 400, 400)));
 		lightArrayList.add(new Light(new Sprite(new Texture("textures/blue_light.png")), new Rectangle(600, 200, 70, 70)));
 
-		texture1=new Texture("textures/background.png");
+		background =new Texture("textures/background.png");
 
-		player = new Player(new Rectangle(165, 165, 70, 70), 2);
+		player = new Player(new Rectangle(170, 170, 40, 40), 2);
 
 		// Day night cycle starts at 12:00 A.M.
 		dayNightCycle = new DayNightCycle(12, 0);
@@ -135,7 +136,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 	public void drawObjects(SpriteBatch spriteBatch) {
 		spriteBatch.setBlendFunction(GL20.GL_SRC_ALPHA,GL20.GL_ONE_MINUS_SRC_ALPHA);
 		spriteBatch.begin();
-		spriteBatch.draw(texture1,0,0);
+		spriteBatch.draw(background,0,0);
 		player.draw(spriteBatch);
 		spriteBatch.end();
 	}
@@ -143,6 +144,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 	public void updateLightFrameBuffer(SpriteBatch spriteBatch) {
 		Gdx.gl.glClearColor(0.0f, 0.0f, 0.0f,1f);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+		
 		frameBuffer.begin();
 
 		Gdx.gl.glClearColor(dayNightCycle.getRgbValue(),dayNightCycle.getRgbValue(),dayNightCycle.getRgbValue(),1f);
@@ -169,9 +171,10 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 	
 	@Override
 	public void dispose () {
+		frameBuffer.dispose();
+		font.dispose();
 		spriteBatch.dispose();
-		texture.dispose();
-		texture1.dispose();
+		background.dispose();
 	}
 
 	@Override
@@ -193,17 +196,23 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 
 	@Override
 	public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-		return false;
+		screenY = Gdx.graphics.getHeight() - screenY;
+		player.updateTouchDown(screenX, screenY);
+		return true;
 	}
 
 	@Override
 	public boolean touchUp(int screenX, int screenY, int pointer, int button) {
-		return false;
+		screenY = Gdx.graphics.getHeight() - screenY;
+		player.updateTouchUp(screenX, screenY);
+		return true;
 	}
 
 	@Override
 	public boolean touchDragged(int screenX, int screenY, int pointer) {
-		return false;
+		screenY = Gdx.graphics.getHeight() - screenY;
+		player.updateTouchDragged(screenX, screenY);
+		return true;
 	}
 
 	@Override
