@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.g2d.ParticleEffect;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,7 +15,6 @@ public class Player {
     HashMap<String, MyAnimation> playerAnimationHashMap;
     Rectangle hitbox;
     Sprite hitboxSprite;
-    float moveSpeed;
     HashMap<String, Boolean> playerBooleanHashMap;
 
     // Walking on dirty particle effect
@@ -24,11 +24,15 @@ public class Player {
     String direction;
 
     // Constants
-    final float xOffset = -40, yOffset = -10;
-    final float spriteWidth = 120, spriteHeight = 120;
+    final float xOffset = -38, yOffset = -10;
+    final float spriteWidth = 100, spriteHeight = 100;
 
     // Pointer variables
     float pointerX, pointerY;
+
+    // Player stats
+    float moveSpeed;
+    float attackDelay, attackTimer;
 
     public Player(Rectangle hitbox, float moveSpeed) {
         this.hitbox = hitbox;
@@ -43,6 +47,9 @@ public class Player {
         createPlayerAnimationHashMap();
         // Default direction
         direction = "playerWalkRight";
+        // Default attack delay, attack timer will be incremented with elapsed time
+        attackDelay = 0.4f;
+        attackTimer = 0f;
 
         walkingOnDirtyPE = new ParticleEffect();
         walkingOnDirtyPE.load(Gdx.files.internal("textures/walking_on_dirty_particles.pe"), Gdx.files.internal("textures"));
@@ -82,7 +89,6 @@ public class Player {
     }
 
     public void draw(SpriteBatch spriteBatch) {
-        //hitboxSprite.draw(spriteBatch);
 
         if(playerBooleanHashMap.get(direction)) {
             walkingOnDirtyPE.draw(spriteBatch);
@@ -108,6 +114,8 @@ public class Player {
         if(!playerBooleanHashMap.get(direction)) {
             playerAnimationHashMap.get(direction).draw(spriteBatch, hitbox.getX()+xOffset, hitbox.getY()+yOffset, spriteWidth, spriteHeight);
         }
+
+        hitboxSprite.draw(spriteBatch);
     }
 
     // x and y are pointer touch/click coordinates
@@ -138,7 +146,7 @@ public class Player {
         this.hitbox = hitbox;
     }
 
-    public void update() {
+    public void update(ArrayList<Bullet> projectileList) {
         for(Map.Entry<String, MyAnimation> entry : playerAnimationHashMap.entrySet()) {
             // If the player is walking into direction
             if(entry.getKey().equals(direction) && !playerBooleanHashMap.get(direction)) {
@@ -151,16 +159,31 @@ public class Player {
         if(walkingOnDirtyPE.isComplete() && playerBooleanHashMap.get(direction)) {
             walkingOnDirtyPE.reset();
         }
-
         updatePosition();
-        calculateAngle();
+        updateAttack(projectileList);
+        // Attack timer will be incremented with elapsed time
+        attackTimer += Gdx.graphics.getDeltaTime();
     }
 
-    public void calculateAngle() {
+    public void updateAttack(ArrayList<Bullet> projectileList) {
         // If touch/pointer is at clicked (or at screen) or is being dragged across the screen
-        if(playerBooleanHashMap.get("isTouchedDown")) {
-
+        if(playerBooleanHashMap.get("isTouchedDown") && attackTimer > attackDelay) {
+            // Create bullet
+            Sprite bulletSprite = new Sprite(new Texture("projectiles/wood_shot.png"));
+            float angle = calculateAngle();
+            Rectangle bulletHitbox = new Rectangle(hitbox.getCenterX(), hitbox.getCenterY(), 24, 3);
+            projectileList.add(new Bullet(bulletSprite, bulletHitbox, 5, 2, angle));
+            // Reset attack timer
+            attackTimer = 0f;
         }
+    }
+
+    public float calculateAngle() {
+        float angle = 0f;
+        float difX = pointerX - (Gdx.graphics.getWidth()/2f);
+        float difY = pointerY - (Gdx.graphics.getHeight()/2f);
+        angle = (float)(180.0 / Math.PI * Math.atan2(difY, difX));
+        return angle;
     }
 
     public void drawParticles(SpriteBatch spriteBatch) {

@@ -37,7 +37,9 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 	HashMap<String, Color> colorHashMap;
 	// Array list with lights
 	ArrayList<Light> lightArrayList;
-	// Font size
+	// Array list with bullets (projectiles from player, monsters, npcs, and so forth)
+	ArrayList<Bullet> projectileList;
+ 	// Font size
 	final int FONT_SIZE = 30;
 
 	@Override
@@ -67,10 +69,13 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 
 		background =new Texture("textures/background.png");
 
-		player = new Player(new Rectangle(170, 170, 40, 40), 2);
+		player = new Player(new Rectangle(170, 170, 24, 40), 2);
 
 		// Day night cycle starts at 12:00 A.M.
 		dayNightCycle = new DayNightCycle(12, 0);
+
+		// Projectile list
+		projectileList = new ArrayList<Bullet>();
 
 		Gdx.input.setInputProcessor(this);
 	}
@@ -97,8 +102,8 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 	@Override
 	public void render() {
 
-		// Update player, map, enemies, etc
-		updateObjects(spriteBatch);
+		// Update player, map, enemies, projectiles, and so forth
+		updateObjects();
 
 		// Update lights
 		updateLights();
@@ -116,28 +121,43 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		drawLight(spriteBatch);
 	}
 
+	// Update lights
 	public void updateLights() {
 		for(Light light : lightArrayList) {
 			light.update();
 		}
 	}
 
-	public void updateObjects(SpriteBatch spriteBatch) {
+	// Update player, map, enemies, projectiles, and so forth
+	public void updateObjects() {
+		// Update Day/Night cycle
 		dayNightCycle.updateTime();
 		dayNightCycle.updateRGBValues();
-		player.update();
+		// Update projectiles
+		for(Bullet projectile : projectileList) {
+			projectile.update();
+		}
+		// Update player
+		player.update(projectileList);
 		// Update camera
 		camera.position.set(player.getHitbox().getCenterX(), player.getHitbox().getCenterY(), 0);
 		camera.update();
 
 	}
 
-	// Player, enemies, map character
+	// Draw player, enemies, projectiles, npcs, map, and so forth
 	public void drawObjects(SpriteBatch spriteBatch) {
 		spriteBatch.setBlendFunction(GL20.GL_SRC_ALPHA,GL20.GL_ONE_MINUS_SRC_ALPHA);
 		spriteBatch.begin();
+		// Draw background
 		spriteBatch.draw(background,0,0);
+
+		// Draw player
 		player.draw(spriteBatch);
+        // Draw projectiles on screen
+        for(Bullet projectile : projectileList) {
+            projectile.draw(spriteBatch);
+        }
 		spriteBatch.end();
 	}
 
@@ -157,7 +177,6 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 			light.draw(spriteBatch);
 		}
 		spriteBatch.end();
-
 		frameBuffer.end();
 	}
 
