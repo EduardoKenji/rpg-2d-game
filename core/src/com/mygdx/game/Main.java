@@ -16,6 +16,7 @@ import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 
 public class Main extends ApplicationAdapter implements InputProcessor {
 
@@ -39,6 +40,8 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 	ArrayList<Light> lightArrayList;
 	// Array list with bullets (projectiles from player, monsters, npcs, and so forth)
 	ArrayList<Bullet> projectileList;
+	// Array list with enemies
+	ArrayList<Enemie> enemieList;
  	// Font size
 	final int FONT_SIZE = 30;
 
@@ -77,7 +80,30 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		// Projectile list
 		projectileList = new ArrayList<Bullet>();
 
+		// Enemie list
+		enemieList = new ArrayList<Enemie>();
+
+		// Fill enemie list
+		fillEnemieList();
+
 		Gdx.input.setInputProcessor(this);
+	}
+
+	public void fillEnemieList() {
+		Rectangle blueSlimeRectangle = new Rectangle(600, 200, 25, 20);
+		float moveSpeed = 0.7f;
+		String spriteSheetPath = "characters/enemies/blue_slime.png";
+		String projectileTexturePath = "projectiles/blue_slime_projectile.png";
+		String walkingPEPath = "textures/walking_on_dirty_particles.pe";
+		String walkingPEFolder = "textures";
+		float walkingFrameDuration = 0.3f;
+		Enemie blueSlime = new Enemie(blueSlimeRectangle, moveSpeed, spriteSheetPath, projectileTexturePath, walkingPEPath, walkingPEFolder, walkingFrameDuration);
+		blueSlime.setxOffset(-37.5f);
+		blueSlime.setyOffset(-7);
+		blueSlime.setParticleEffectScale(0.6f);
+		enemieList.add(blueSlime);
+
+
 	}
 
 	// Create and return a new font
@@ -119,6 +145,19 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 
 		// Draw lights
 		drawLight(spriteBatch);
+
+		// Remove projectiles
+		removeProjectiles();
+	}
+
+	public void removeProjectiles() {
+		// Projectile list to remove bullets/projectiles without concurrence problems
+		Iterator<Bullet> projectileListIterator = projectileList.iterator();
+		while(projectileListIterator.hasNext()) {
+			if(projectileListIterator.next().isDead()) {
+				projectileListIterator.remove();
+			}
+		}
 	}
 
 	// Update lights
@@ -137,6 +176,10 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		for(Bullet projectile : projectileList) {
 			projectile.update();
 		}
+		// Update enemies
+		for(Enemie enemie : enemieList) {
+			enemie.update();
+		}
 		// Update player
 		player.update(projectileList);
 		// Update camera
@@ -151,13 +194,18 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		spriteBatch.begin();
 		// Draw background
 		spriteBatch.draw(background,0,0);
-
+		// Draw projectiles on screen
+		for(Bullet projectile : projectileList) {
+			projectile.draw(spriteBatch);
+		}
+		// Draw enemies
+		for(Enemie enemie : enemieList) {
+			enemie.draw(spriteBatch);
+		}
 		// Draw player
 		player.draw(spriteBatch);
-        // Draw projectiles on screen
-        for(Bullet projectile : projectileList) {
-            projectile.draw(spriteBatch);
-        }
+
+
 		spriteBatch.end();
 	}
 

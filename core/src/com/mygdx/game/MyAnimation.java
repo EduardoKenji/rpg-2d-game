@@ -30,7 +30,6 @@ public class MyAnimation {
         }
         // Initialize the Animation with the frame interval and array of frames
         animation = new Animation<TextureRegion>(frameDuration, tmp2);
-
         stateTime = 0f;
     }
 
@@ -67,5 +66,17 @@ public class MyAnimation {
     void update() {
         // Accumulate elapsed time
         stateTime += Gdx.graphics.getDeltaTime();
+    }
+
+    public Animation<TextureRegion> getAnimation() {
+        return animation;
+    }
+
+    public float getStateTime() {
+        return stateTime;
+    }
+
+    public void setStateTime(float stateTime) {
+        this.stateTime = stateTime;
     }
 }
