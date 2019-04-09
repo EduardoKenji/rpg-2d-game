@@ -41,7 +41,7 @@ public class Player {
     // Player projectiles properties
     float projectileSpeed, projectileLifeTime;
     float projectileWidth, projectileHeight;
-    Texture projectileTexture;
+    Texture projectileTexture, projectileShadowTexture;
 
     // If rotate projectile is false, the angle to rotate the spawned bullet/projectile will be 0
     final boolean rotateProjectile = true;
@@ -78,6 +78,7 @@ public class Player {
         playerId = 0;
         // Projectile texture
         projectileTexture = new Texture("projectiles/wood_projectile.png");
+        projectileShadowTexture = new Texture("projectiles/shadow_projectile.png");
         // Walking on dirt/grass particle effect
         walkingOnDirtPE = new ParticleEffect();
         walkingOnDirtPE.load(Gdx.files.internal("textures/walking_on_dirty_particles.pe"), Gdx.files.internal("textures"));
@@ -137,7 +138,7 @@ public class Player {
         }
 
         // Debug draw player's hitbox sprite (a red empty rectangle)
-        //hitboxSprite.draw(spriteBatch);
+        hitboxSprite.draw(spriteBatch);
     }
 
     public void drawPlayerAttackingAnimation(SpriteBatch spriteBatch) {
@@ -232,14 +233,17 @@ public class Player {
         if(playerBooleanHashMap.get("isTouchedDown") && attackTimer > attackDelay) {
             // Get the sprite for the bullet
             Sprite bulletSprite = new Sprite(projectileTexture);
+            Sprite bulletShadowSprite = new Sprite(projectileShadowTexture);
             // Determines the angle the player is shooting to
             angle = calculateAngle();
             // Not actually used as hitbox, as the sprite has a bounding rectangle
             Rectangle bulletHitbox = new Rectangle(hitbox.getCenterX(), hitbox.getCenterY(), projectileWidth, projectileHeight);
+            Rectangle bulletShadowHitbox = new Rectangle(hitbox.getCenterX(), hitbox.getCenterY()-18, projectileWidth, projectileHeight);
             // The player entity id is 0
             // Rotate projectile boolean controls is the new bullet should or not be rotated
             if(rotateProjectile) {
                 projectileList.add(new Bullet(bulletSprite, bulletHitbox, projectileSpeed, projectileLifeTime, angle, playerId));
+                projectileList.add(new Bullet(bulletShadowSprite,bulletShadowHitbox, projectileSpeed, projectileLifeTime, angle, playerId));
             } else {
                 projectileList.add(new Bullet(bulletSprite, bulletHitbox, projectileSpeed, projectileLifeTime, 0, playerId));
             }
@@ -265,7 +269,6 @@ public class Player {
 
     // Calculate angle to shoot a projectile, between 0 and ~359.99
     public float calculateAngle() {
-        float angle = 0f;
         float difX = pointerX - (Gdx.graphics.getWidth()/2f);
         float difY = pointerY - (Gdx.graphics.getHeight()/2f);
         angle = (float)(180.0 / Math.PI * Math.atan2(difY, difX));

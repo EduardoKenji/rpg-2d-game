@@ -37,7 +37,7 @@ public class DayNightCycle {
     }
 
     public void updateTime() {
-        setMinutes(getMinutes() + (Gdx.graphics.getDeltaTime() * 50));
+        setMinutes(getMinutes() + (Gdx.graphics.getDeltaTime()));
         if(this.hours >= 24) {
             this.hours = 0;
         }

@@ -90,6 +90,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 	}
 
 	public void fillEnemieList() {
+		Texture projectileShadowTexture = new Texture("projectiles/shadow_projectile.png");
 		Rectangle blueSlimeRectangle = new Rectangle(600, 200, 25, 20);
 		float moveSpeed = 0.7f;
 		String spriteSheetPath = "characters/enemies/blue_slime.png";
@@ -98,9 +99,28 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		String walkingPEFolder = "textures";
 		float walkingFrameDuration = 0.3f;
 		Enemie blueSlime = new Enemie(blueSlimeRectangle, moveSpeed, spriteSheetPath, projectileTexturePath, walkingPEPath, walkingPEFolder, walkingFrameDuration);
+		// Enemie sprite positioning
+		blueSlime.setSpriteWidth(100);
+		blueSlime.setSpriteHeight(100);
 		blueSlime.setxOffset(-37.5f);
 		blueSlime.setyOffset(-7);
 		blueSlime.setParticleEffectScale(0.6f);
+		// AI properties
+		// 1: Hostile random Walking AI: the enemie will either stay idle or walk around randomly
+		blueSlime.setEnemieId(1000);
+		blueSlime.setAiType(1);
+		blueSlime.setHostileRange(200f);
+		blueSlime.setPlayer(player);
+		blueSlime.setAiTimeToAction(0.25f);
+		blueSlime.setAiTimeToChangeDecision(0.9f);
+		// Rotate projectile
+		blueSlime.setAttackDelay(2f);
+		blueSlime.setRotateProjectile(true);
+		blueSlime.setProjectileWidth(16);
+		blueSlime.setProjectileHeight(2);
+		blueSlime.setProjectileLifeTime(1);
+		blueSlime.setProjectileSpeed(1.5f);
+		blueSlime.setProjectileShadowTexture(projectileShadowTexture);
 		enemieList.add(blueSlime);
 
 
@@ -178,7 +198,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		}
 		// Update enemies
 		for(Enemie enemie : enemieList) {
-			enemie.update();
+			enemie.update(projectileList);
 		}
 		// Update player
 		player.update(projectileList);

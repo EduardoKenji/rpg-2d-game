@@ -22,12 +22,12 @@ public class Bullet {
         this.range = range;
         this.angle = angle;
         // Set sprite position to origin point (center of entity hitbox)
-        centerX = rectangle.getX();
-        centerY = rectangle.getY();
+        centerX = rectangle.getX() + (float)(10 * Math.cos(Math.toRadians(angle)));
+        centerY = rectangle.getY() + (float)(10 * Math.sin(Math.toRadians(angle)));
         // Rotate sprite to conform angle
         this.bulletSprite.rotate(angle);
         bulletSprite.setSize(rectangle.getWidth(), rectangle.getHeight());
-        bulletSprite.setCenter(centerX+bulletSprite.getWidth()/2, centerY+bulletSprite.getHeight()/2);
+        bulletSprite.setCenter(centerX, centerY);
         bulletSprite.setOriginCenter();
         // Check if bullet is dead
         dead = false;

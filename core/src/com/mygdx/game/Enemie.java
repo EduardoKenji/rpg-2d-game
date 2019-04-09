@@ -23,15 +23,21 @@ public class Enemie {
     // Enemie projectiles properties
     float projectileSpeed, projectileLifeTime;
     float projectileWidth, projectileHeight;
-    Texture projectileTexture;
+    Texture projectileTexture, projectileShadowTexture;
+    boolean rotateProjectile;
 
     // Enemie properties
     // AI type for this enemie
     int aiType;
     // AI variables
-    float aiTimer;
-    int currentDecision = 0;
-    final float aiTimeToChangeDecision = 1.0f;
+    float aiTimer, aiTimer2;
+    int currentDecision;
+    float aiTimeToChangeDecision;
+    float aiTimeToAction;
+    // Only usable for enemies that spawn others
+    float aiTimeToSpawn;
+    // The range for the enemie to target opponents
+    float hostileRange;
 
     // Spawn coordinates for fixated enemies
     float originX, originY;
@@ -41,6 +47,8 @@ public class Enemie {
     Enemie master;
     // If this monster has minions
     ArrayList<Enemie> minionList;
+    // Target player
+    Player player;
 
     // Walking particle effect
     ParticleEffect walkingParticleEffect;
@@ -97,12 +105,11 @@ public class Enemie {
         hitboxSprite.setSize(hitbox.getWidth(), hitbox.getHeight());
         hitboxSprite.setPosition(hitbox.getX(), hitbox.getY());
 
-        // Sprite width and sprite height
-        spriteWidth = 100;
-        spriteHeight = 100;
-
         // Reset ai timer
         aiTimer = 0f;
+
+        // Default direction
+        currentDecision = 0;
     }
 
     public void draw(SpriteBatch spriteBatch) {
@@ -122,17 +129,29 @@ public class Enemie {
         }
 
         // Debug draw player's hitbox sprite (a red empty rectangle)
-        //hitboxSprite.draw(spriteBatch);
+        hitboxSprite.draw(spriteBatch);
     }
 
     // Update a lot of player stats and properties
-    public void update() {
+    public void update(ArrayList<Bullet> projectileList) {
 
         // Increment AI timer
         aiTimer += Gdx.graphics.getDeltaTime();
+        aiTimer2 += Gdx.graphics.getDeltaTime();
+        // Increment attack timer
+        attackTimer += Gdx.graphics.getDeltaTime();
         // 0: Random Walking AI: the enemie will either stay idle or walk around randomly
         if(aiType == 0) {
-            randomWalkingAI();
+            // hostile: false
+            randomWalkingAI(false, null);
+        }
+        /*
+        1: Hostile random Walking AI: the enemie will attack the player is close enough,
+        else the enemie will either stay idle or walk around randomly
+        */
+        else if(aiType == 1) {
+            // Hostile
+            randomWalkingAI(true, projectileList);
         }
 
         // Update animations
@@ -145,32 +164,72 @@ public class Enemie {
             walkingParticleEffect.reset();
         }
         updatePosition();
-
-        // Attack timer will be incremented with elapsed time
-        attackTimer += Gdx.graphics.getDeltaTime();
     }
 
     float angleToWalk;
 
-    public void randomWalkingAI() {
+    public void randomWalkingAI(boolean hostile, ArrayList<Bullet> projectileList) {
+
+        // Decides if staying idle or walk randomly
         if(aiTimer > aiTimeToChangeDecision) {
-            currentDecision = (int)(Math.random()*2);
+            currentDecision = (int)(Math.random()*3);
             aiTimer = 0;
-            // Randomize angle to walk
+        }
+        // Randomize angle to walk
+        if(aiTimer2 > aiTimeToAction) {
+
             angleToWalk = (float)(Math.random()*360);
             if(angleToWalk >= 270 || angleToWalk < 90) {
                 direction = "right";
             } else {
                 direction = "left";
             }
+            aiTimer2 = 0f;
         }
         // Decisions and courses of action
         if(currentDecision == 0) {
             isMoving = false;
-        } else if(currentDecision == 1) {
+        } else if(currentDecision >= 1) {
             isMoving = true;
             hitbox.setX(hitbox.getX() + (float)(moveSpeed * Math.cos(Math.toRadians(angleToWalk))));
             hitbox.setY(hitbox.getY() + (float)(moveSpeed * Math.sin(Math.toRadians(angleToWalk))));
+        }
+
+        // hostile is true fs aiType = 1, false if aiType = 0
+        // Verify is player is close enough to attack
+        if(hostile && euclidianDistance(hitbox.getCenterX(), hitbox.getCenterY(), player.getHitbox().getCenterX(), player.getHitbox().getCenterY()) < hostileRange) {
+            // Face player
+            if(player.getHitbox().getX() <= hitbox.getCenterX()) {
+                direction = "left";
+            } else {
+                direction = "right";
+            }
+
+            updateAttack(projectileList);
+
+        }
+    }
+
+    public void updateAttack(ArrayList<Bullet> projectileList) {
+        if(attackTimer > attackDelay) {
+            // Get the sprite for the bullet
+            Sprite bulletSprite = new Sprite(projectileTexture);
+            Sprite bulletShadowSprite = new Sprite(projectileShadowTexture);
+            // Determines the angle the player is shooting to
+            float angle = calculateAngle(player.getHitbox().getCenterX(), player.getHitbox().getCenterY(), hitbox.getCenterX(), hitbox.getCenterY());
+            // Not actually used as hitbox, as the sprite has a bounding rectangle
+            Rectangle bulletHitbox = new Rectangle(hitbox.getCenterX(), hitbox.getCenterY(), projectileWidth, projectileHeight);
+            Rectangle bulletShadowHitbox = new Rectangle(hitbox.getCenterX(), hitbox.getY(), projectileWidth, projectileHeight);
+            // The player entity id is 0
+            // Rotate projectile boolean controls is the new bullet should or not be rotated
+            if(rotateProjectile) {
+                projectileList.add(new Bullet(bulletSprite, bulletHitbox, projectileSpeed, projectileLifeTime, angle, enemieId));
+                projectileList.add(new Bullet(bulletShadowSprite,bulletShadowHitbox, projectileSpeed, projectileLifeTime, angle, enemieId));
+            } else {
+                projectileList.add(new Bullet(bulletSprite, bulletHitbox, projectileSpeed, projectileLifeTime, 0, enemieId));
+            }
+            // Reset attackTimer
+            attackTimer = 0;
         }
     }
 
@@ -178,6 +237,95 @@ public class Enemie {
         hitboxSprite.setPosition(hitbox.getX(), hitbox.getY());
         walkingParticleEffect.setPosition(hitbox.getCenterX(), hitbox.getY());
 
+    }
+
+    // (x1, y1) is the vector target
+    // (x2, y2) is the vector origin
+    // Calculate angle to shoot a projectile, between 0 and ~359.99
+    public float calculateAngle(float x1, float y1, float x2, float y2) {
+        float difX = x1 - x2;
+        float difY = y1 - y2;
+        float angle = (float)(180.0 / Math.PI * Math.atan2(difY, difX));
+        if(angle < 0) {
+            return 360 + angle;
+        }
+        return angle;
+    }
+
+    public float euclidianDistance(float x1, float y1, float x2, float y2) {
+        return (float)(Math.sqrt(Math.pow(x1-x2, 2)+Math.pow(y1-y2, 2)));
+    }
+
+    public boolean isRotateProjectile() {
+        return rotateProjectile;
+    }
+
+    public void setRotateProjectile(boolean rotateProjectile) {
+        this.rotateProjectile = rotateProjectile;
+    }
+
+    public float getAiTimer2() {
+        return aiTimer2;
+    }
+
+    public void setAiTimer2(float aiTimer2) {
+        this.aiTimer2 = aiTimer2;
+    }
+
+    public int getCurrentDecision() {
+        return currentDecision;
+    }
+
+    public void setCurrentDecision(int currentDecision) {
+        this.currentDecision = currentDecision;
+    }
+
+    public float getAiTimeToChangeDecision() {
+        return aiTimeToChangeDecision;
+    }
+
+    public float getAiTimeToAction() {
+        return aiTimeToAction;
+    }
+
+    public float getHostileRange() {
+        return hostileRange;
+    }
+
+    public void setHostileRange(float hostileRange) {
+        this.hostileRange = hostileRange;
+    }
+
+    public float getOriginX() {
+        return originX;
+    }
+
+    public void setOriginX(float originX) {
+        this.originX = originX;
+    }
+
+    public float getOriginY() {
+        return originY;
+    }
+
+    public void setOriginY(float originY) {
+        this.originY = originY;
+    }
+
+    public Player getPlayer() {
+        return player;
+    }
+
+    public void setPlayer(Player player) {
+        this.player = player;
+    }
+
+    public float getAngleToWalk() {
+        return angleToWalk;
+    }
+
+    public void setAngleToWalk(float angleToWalk) {
+        this.angleToWalk = angleToWalk;
     }
 
     public float getAiTimer() {
@@ -386,5 +534,21 @@ public class Enemie {
 
     public void setSpriteHeight(float spriteHeight) {
         this.spriteHeight = spriteHeight;
+    }
+
+    public void setAiTimeToChangeDecision(float aiTimeToChangeDecision) {
+        this.aiTimeToChangeDecision = aiTimeToChangeDecision;
+    }
+
+    public void setAiTimeToAction(float aiTimeToAction) {
+        this.aiTimeToAction = aiTimeToAction;
+    }
+
+    public Texture getProjectileShadowTexture() {
+        return projectileShadowTexture;
+    }
+
+    public void setProjectileShadowTexture(Texture projectileShadowTexture) {
+        this.projectileShadowTexture = projectileShadowTexture;
     }
 }
