@@ -5,7 +5,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
-public class Bullet {
+public class Bullet extends ZOrderableSprite {
     Sprite bulletSprite;
     float speed, range, angle;
     float centerX, centerY;
@@ -16,6 +16,7 @@ public class Bullet {
 
     // Entity id represents the responsible for shooting the projectile
     public Bullet(Sprite bulletSprite, Rectangle rectangle, float speed, float range, float angle, int entity_id) {
+        super(rectangle.getY());
         this.bulletSprite = bulletSprite;
         // Bullet properties
         this.speed = speed;
@@ -25,7 +26,7 @@ public class Bullet {
         centerX = rectangle.getX() + (float)(10 * Math.cos(Math.toRadians(angle)));
         centerY = rectangle.getY() + (float)(10 * Math.sin(Math.toRadians(angle)));
         // Rotate sprite to conform angle
-        this.bulletSprite.rotate(angle);
+        this.bulletSprite.setRotation(angle);
         bulletSprite.setSize(rectangle.getWidth(), rectangle.getHeight());
         bulletSprite.setCenter(centerX, centerY);
         bulletSprite.setOriginCenter();
@@ -36,6 +37,8 @@ public class Bullet {
     void update() {
         centerX += (float)(speed * Math.cos(Math.toRadians(angle)));
         centerY += (float)(speed * Math.sin(Math.toRadians(angle)));
+        setX(centerX);
+        setY(centerY);
         bulletSprite.setCenter(centerX, centerY);
         bulletSprite.setOriginCenter();
         timer += Gdx.graphics.getDeltaTime();
@@ -52,7 +55,7 @@ public class Bullet {
         this.dead = dead;
     }
 
-    void draw(SpriteBatch spriteBatch) {
+    public void draw(SpriteBatch spriteBatch) {
         bulletSprite.draw(spriteBatch);
     }
 
