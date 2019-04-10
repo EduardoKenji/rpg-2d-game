@@ -19,6 +19,9 @@ public class Enemie extends ZOrderableSprite {
     float moveSpeed;
     float attackDelay, attackTimer;
     float baseDamage;
+    float currentHp, maximumHp;
+    float currentShield, maximumShield;
+    HpBar hpBar;
 
     // Enemie projectiles properties
     float projectileSpeed, projectileLifeTime;
@@ -129,7 +132,6 @@ public class Enemie extends ZOrderableSprite {
             walkingParticleEffect.draw(spriteBatch);
         }
 
-
         // Draw animations
         if(direction.equals("left")) {
             faceLeft.draw(spriteBatch, hitbox.getX()+xOffset, hitbox.getY()+yOffset, spriteWidth, spriteHeight);
@@ -137,8 +139,9 @@ public class Enemie extends ZOrderableSprite {
             faceRight.draw(spriteBatch, hitbox.getX()+xOffset, hitbox.getY()+yOffset, spriteWidth, spriteHeight);
         }
 
+        hpBar.draw(spriteBatch);
         // Debug draw player's hitbox sprite (a red empty rectangle)
-        hitboxSprite.draw(spriteBatch);
+        //hitboxSprite.draw(spriteBatch);
     }
 
     // Update a lot of player stats and properties
@@ -172,7 +175,12 @@ public class Enemie extends ZOrderableSprite {
         if(walkingParticleEffect.isComplete()) {
             walkingParticleEffect.reset();
         }
+
+        // Update enemie position
         updatePosition();
+        // Update hp bar
+        hpBar.update(currentHp, maximumHp, currentShield, maximumShield);
+        hpBar.updatePosition(hitbox.getX(), hitbox.getY() - 7);
     }
 
     float angleToWalk;
@@ -270,6 +278,62 @@ public class Enemie extends ZOrderableSprite {
 
     public float euclidianDistance(float x1, float y1, float x2, float y2) {
         return (float)(Math.sqrt(Math.pow(x1-x2, 2)+Math.pow(y1-y2, 2)));
+    }
+
+    public float getCurrentHp() {
+        return currentHp;
+    }
+
+    public void setCurrentHp(float currentHp) {
+        this.currentHp = currentHp;
+    }
+
+    public float getMaximumHp() {
+        return maximumHp;
+    }
+
+    public void setMaximumHp(float maximumHp) {
+        this.maximumHp = maximumHp;
+    }
+
+    public float getCurrentShield() {
+        return currentShield;
+    }
+
+    public void setCurrentShield(float currentShield) {
+        this.currentShield = currentShield;
+    }
+
+    public float getMaximumShield() {
+        return maximumShield;
+    }
+
+    public void setMaximumShield(float maximumShield) {
+        this.maximumShield = maximumShield;
+    }
+
+    public HpBar getHpBar() {
+        return hpBar;
+    }
+
+    public void setHpBar(HpBar hpBar) {
+        this.hpBar = hpBar;
+    }
+
+    public BulletController getBulletController() {
+        return bulletController;
+    }
+
+    public void setBulletController(BulletController bulletController) {
+        this.bulletController = bulletController;
+    }
+
+    public float getAiSpawnTimer() {
+        return aiSpawnTimer;
+    }
+
+    public void setAiSpawnTimer(float aiSpawnTimer) {
+        this.aiSpawnTimer = aiSpawnTimer;
     }
 
     public boolean isRotateProjectile() {

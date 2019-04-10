@@ -93,13 +93,25 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		// Debug tree to test depth
 		MapObject testTree;
 
-		for(int i = 0; i < 40000; i++) {
-			testTree = new MapObject(new Texture("test_tree_128.png"), (int)(Math.random()*10000), (int)(Math.random()*10000), 128, 128);
+
+		testTree = new MapObject(new Texture("test_tree_128.png"), 300, 300, 128, 128);
+		mapObjectList.add(testTree);
+		zOrderableSpriteList.add(testTree);
+		for(int i = 0; i < 1; i++) {
+			testTree = new MapObject(new Texture("test_tree_128.png"), (float)(Math.random()*10000), (float)(Math.random()*10000), 128, 128);
 			mapObjectList.add(testTree);
 			zOrderableSpriteList.add(testTree);
 		}
 
+        Texture hpBarsTextures[] = new Texture[3];
+        hpBarsTextures[0] = new Texture("hp_bars/black_bar.png");
+        hpBarsTextures[1] = new Texture("hp_bars/green_bar.png");
+        hpBarsTextures[2] = new Texture("hp_bars/blue_bar.png");
 		player = new Player(new Rectangle(300, 300, 17, 28), 2);
+        HpBar hpBar = new HpBar( new Rectangle(300, 293, 17, 28), hpBarsTextures);
+        player.setHpBar(hpBar);
+        player.setCurrentHp(200);
+        player.setMaximumHp(200);
 		zOrderableSpriteList.add(player);
 
 		// Day night cycle starts at 12:00 A.M.
@@ -122,9 +134,14 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 
 	public void fillEnemieList() {
 		Texture projectileShadowTexture = new Texture("projectiles/shadow_projectile.png");
+		Texture hpBarsTextures[] = new Texture[3];
+		hpBarsTextures[0] = new Texture("hp_bars/black_bar.png");
+		hpBarsTextures[1] = new Texture("hp_bars/green_bar.png");
+		hpBarsTextures[2] = new Texture("hp_bars/blue_bar.png");
 
 		// Small blue slime
 		Rectangle hitbox = new Rectangle(600, 200, 25, 20);
+		HpBar hpBar = new HpBar( new Rectangle(600, 193, 25, 20), hpBarsTextures);
 		float moveSpeed = 0.7f;
 		String spriteSheetPath = "characters/enemies/blue_slime.png";
 		String projectileTexturePath = "projectiles/blue_slime_projectile.png";
@@ -132,6 +149,10 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		String walkingPEFolder = "textures";
 		float walkingFrameDuration = 0.3f;
 		Enemie enemie = new Enemie(hitbox, moveSpeed, spriteSheetPath, projectileTexturePath, walkingPEPath, walkingPEFolder, walkingFrameDuration);
+		// HP bar
+		enemie.setHpBar(hpBar);
+		enemie.setCurrentHp(20);
+		enemie.setMaximumHp(20);
 		// Enemie sprite positioning
 		enemie.setSpriteWidth(100);
 		enemie.setSpriteHeight(100);
@@ -160,47 +181,54 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		enemieList.add(enemie);
 		zOrderableSpriteList.add(enemie);
 
-		// Mother blue slime
-		hitbox = new Rectangle(600, 200, 50, 40);
-		moveSpeed = 0.7f;
-		spriteSheetPath = "characters/enemies/blue_slime.png";
-		projectileTexturePath = "projectiles/blue_slime_projectile.png";
-		walkingPEPath = "textures/walking_on_dirty_particles.pe";
-		walkingPEFolder = "textures";
-		walkingFrameDuration = 0.3f;
-		enemie = new Enemie(hitbox, moveSpeed, spriteSheetPath, projectileTexturePath, walkingPEPath, walkingPEFolder, walkingFrameDuration);
-		// Enemie sprite positioning
-		enemie.setSpriteWidth(200);
-		enemie.setSpriteHeight(200);
-		enemie.setxOffset(-75);
-		enemie.setyOffset(-16);
-		enemie.setParticleEffectScale(1f);
-		// AI properties
-		// 2: Hostile spawner random walking AI: the enemie will either stay idle or walk around randomly
-		enemie.setEnemieId(1000);
-		enemie.setAiType(1);
-		enemie.setHostileRange(250f);
-		enemie.setPlayer(player);
-		enemie.setAiTimeToAction(0.25f);
-		enemie.setAiTimeToChangeDecision(0.9f);
-		enemie.setAiTimeToSpawn(1f);
-		enemie.setMaxMinions(5);
-		enemie.setSpawnedEnemie(enemieDict.get("blueSlime"));
-		// Projectile properties
-		// 1: 3 bullets with 15 degree distance between
-		enemie.setShootingPattern(1);
-		enemie.setAttackDelay(2f);
-		enemie.setRotateProjectile(true);
-		enemie.setProjectileWidth(28);
-		enemie.setProjectileHeight(3.5f);
-		enemie.setProjectileLifeTime(1.2f);
-		enemie.setProjectileSpeed(1.5f);
-		enemie.setProjectileShadowTexture(projectileShadowTexture);
 		for(int i = 0; i < 100; i++) {
-
+			// Mother blue slime
+			hitbox = new Rectangle(600, 200, 50, 40);
+			hpBar = new HpBar( new Rectangle(600, 193, 50, 40), hpBarsTextures);
+			moveSpeed = 0.7f;
+			spriteSheetPath = "characters/enemies/blue_slime.png";
+			projectileTexturePath = "projectiles/blue_slime_projectile.png";
+			walkingPEPath = "textures/walking_on_dirty_particles.pe";
+			walkingPEFolder = "textures";
+			walkingFrameDuration = 0.3f;
+			enemie = new Enemie(hitbox, moveSpeed, spriteSheetPath, projectileTexturePath, walkingPEPath, walkingPEFolder, walkingFrameDuration);
+			// HP bar
+			enemie.setHpBar(hpBar);
+			enemie.setCurrentHp(50);
+            enemie.setMaximumHp(50);
+            enemie.setCurrentShield((float)(Math.random()*50));
+            enemie.setMaximumShield(50);
+			// Enemie sprite positioning
+			enemie.setSpriteWidth(200);
+			enemie.setSpriteHeight(200);
+			enemie.setxOffset(-75);
+			enemie.setyOffset(-16);
+			enemie.setParticleEffectScale(1f);
+			// AI properties
+			// 2: Hostile spawner random walking AI: the enemie will either stay idle or walk around randomly
+			enemie.setEnemieId(1000);
+			enemie.setAiType(1);
+			enemie.setHostileRange(250f);
+			enemie.setPlayer(player);
+			enemie.setAiTimeToAction(0.25f);
+			enemie.setAiTimeToChangeDecision(0.9f);
+			enemie.setAiTimeToSpawn(1f);
+			enemie.setMaxMinions(5);
+			enemie.setSpawnedEnemie(enemieDict.get("blueSlime"));
+			// Projectile properties
+			// 1: 3 bullets with 15 degree distance between
+			enemie.setShootingPattern(1);
+			enemie.setAttackDelay(2f);
+			enemie.setRotateProjectile(true);
+			enemie.setProjectileWidth(28);
+			enemie.setProjectileHeight(3.5f);
+			enemie.setProjectileLifeTime(1.2f);
+			enemie.setProjectileSpeed(1.5f);
+			enemie.setProjectileShadowTexture(projectileShadowTexture);
+			enemieList.add(enemie);
+			zOrderableSpriteList.add(enemie);
 		}
-		enemieList.add(enemie);
-		zOrderableSpriteList.add(enemie);
+
 	}
 
 	// Create and return a new font

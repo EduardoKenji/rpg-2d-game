@@ -37,6 +37,9 @@ public class Player extends ZOrderableSprite {
     float moveSpeed;
     float attackDelay, attackTimer;
     float baseDamage;
+    float currentHp, maximumHp;
+    float currentShield, maximumShield;
+    HpBar hpBar;
 
     // Player projectiles properties
     int shootingPattern = 0;
@@ -141,8 +144,10 @@ public class Player extends ZOrderableSprite {
             playerAnimationHashMap.get(direction).draw(spriteBatch, hitbox.getX()+xOffset, hitbox.getY()+yOffset, spriteWidth, spriteHeight);
         }
 
+        hpBar.draw(spriteBatch);
+
         // Debug draw player's hitbox sprite (a red empty rectangle)
-        hitboxSprite.draw(spriteBatch);
+        //hitboxSprite.draw(spriteBatch);
     }
 
     public void drawPlayerAttackingAnimation(SpriteBatch spriteBatch) {
@@ -223,7 +228,13 @@ public class Player extends ZOrderableSprite {
         if(walkingParticleEffect.isComplete() && isWalking()) {
             walkingParticleEffect.reset();
         }
+
+        // Update player position
         updatePosition();
+        // Update HP bar
+        hpBar.update(currentHp, maximumHp, currentShield, maximumShield);
+        hpBar.updatePosition(hitbox.getX(), hitbox.getY() - 7);
+        // Update projectile shooting
         updateAttack(projectileList, zOrderableSpriteList);
         // Update direction if shooting
         updateDirectionIfShooting();
@@ -357,5 +368,45 @@ public class Player extends ZOrderableSprite {
         if(keycode == Input.Keys.D || keycode == Input.Keys.RIGHT) {
             playerBooleanHashMap.put("playerWalkRight", false);
         }
+    }
+
+    public float getCurrentHp() {
+        return currentHp;
+    }
+
+    public void setCurrentHp(float currentHp) {
+        this.currentHp = currentHp;
+    }
+
+    public float getMaximumHp() {
+        return maximumHp;
+    }
+
+    public void setMaximumHp(float maximumHp) {
+        this.maximumHp = maximumHp;
+    }
+
+    public float getCurrentShield() {
+        return currentShield;
+    }
+
+    public void setCurrentShield(float currentShield) {
+        this.currentShield = currentShield;
+    }
+
+    public float getMaximumShield() {
+        return maximumShield;
+    }
+
+    public void setMaximumShield(float maximumShield) {
+        this.maximumShield = maximumShield;
+    }
+
+    public HpBar getHpBar() {
+        return hpBar;
+    }
+
+    public void setHpBar(HpBar hpBar) {
+        this.hpBar = hpBar;
     }
 }
