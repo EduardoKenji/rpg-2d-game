@@ -12,6 +12,8 @@ public class Enemie extends ZOrderableSprite {
 
     // Hitbox for the enemie
     Rectangle hitbox;
+    ArrayList<Rectangle> hitboxList;
+    ArrayList<Sprite> bulletHitboxSpriteList;
     // Debug hitbox sprite
     Sprite hitboxSprite = new Sprite(new Texture("textures/hitbox.png"));
 
@@ -22,6 +24,8 @@ public class Enemie extends ZOrderableSprite {
     float currentHp, maximumHp;
     float currentShield, maximumShield;
     HpBar hpBar;
+    int experience;
+    boolean dead;
 
     // Enemie projectiles properties
     float projectileSpeed, projectileLifeTime;
@@ -131,6 +135,13 @@ public class Enemie extends ZOrderableSprite {
 
         // Default direction
         currentDecision = 0;
+
+        // Array list
+		hitboxList = new ArrayList<Rectangle>();
+		bulletHitboxSpriteList = new ArrayList<Sprite>();
+
+		// Enemie is initially not dead
+		dead = false;
     }
 
     public void draw(SpriteBatch spriteBatch) {
@@ -153,9 +164,18 @@ public class Enemie extends ZOrderableSprite {
             gettingHitParticleEffect.draw(spriteBatch);
         }
 
+        // Draw HP bar
         hpBar.draw(spriteBatch);
-        // Debug draw player's hitbox sprite (a red empty rectangle)
+
+        /*
+        // Debug draw enemie sprite hitbox
         hitboxSprite.draw(spriteBatch);
+
+        // Debug draw enemie bullet hitboxes sprite
+        for(Sprite bulletHitbox : bulletHitboxSpriteList) {
+        	bulletHitbox.draw(spriteBatch);
+		}
+		*/
     }
 
     // Update a lot of player stats and properties
@@ -206,7 +226,7 @@ public class Enemie extends ZOrderableSprite {
         // Update getting hit particle effect
         if(damaged) {
             gettingHitParticleEffect.update(Gdx.graphics.getDeltaTime());
-            if(gettingHitParticleEffect.isComplete()) {
+            if(gettingHitParticleEffect.isComplete() && !dead) {
                 damaged = false;
                 gettingHitParticleEffect.reset();
             }
@@ -238,8 +258,14 @@ public class Enemie extends ZOrderableSprite {
             isMoving = false;
         } else if(currentDecision >= 1) {
             isMoving = true;
-            hitbox.setX(hitbox.getX() + (float)(moveSpeed * Math.cos(Math.toRadians(angleToWalk))));
-            hitbox.setY(hitbox.getY() + (float)(moveSpeed * Math.sin(Math.toRadians(angleToWalk))));
+            float offsetX = (float)(moveSpeed * Math.cos(Math.toRadians(angleToWalk)));
+            float offsetY = (float)(moveSpeed * Math.sin(Math.toRadians(angleToWalk)));
+            hitbox.setX(hitbox.getX() + offsetX);
+            hitbox.setY(hitbox.getY() + offsetY);
+            for(Rectangle bulletHitbox : hitboxList) {
+            	bulletHitbox.setX(bulletHitbox.getX() + offsetX);
+            	bulletHitbox.setY(bulletHitbox.getY() + offsetY);
+			}
         }
 
         // hostile is true fs aiType = 1, false if aiType = 0
@@ -294,6 +320,9 @@ public class Enemie extends ZOrderableSprite {
         gettingHitParticleEffect.setPosition(hitbox.getCenterX(), hitbox.getCenterY());
         setX(hitbox.getX());
         setY(hitbox.getY());
+        for(int i = 0; i < bulletHitboxSpriteList.size(); i++) {
+			bulletHitboxSpriteList.get(i).setPosition(hitboxList.get(i).getX(),hitboxList.get(i).getY());
+		}
     }
 
     // (x1, y1) is the vector target
@@ -313,9 +342,21 @@ public class Enemie extends ZOrderableSprite {
         return (float)(Math.sqrt(Math.pow(x1-x2, 2)+Math.pow(y1-y2, 2)));
     }
 
+    public void addHitBox(float x, float y, float width, float height) {
+		Sprite bulletHitboxSprite = new Sprite(new Texture("textures/bullet_hitbox.png"));
+		bulletHitboxSprite.setPosition(x, y);
+		bulletHitboxSprite.setSize(width, height);
+		bulletHitboxSpriteList.add(bulletHitboxSprite);
+		hitboxList.add(new Rectangle(x, y, width, height));
+	}
+
     public void gotDamaged() {
-        damaged = true;
-        gettingHitParticleEffect.reset();
+    	// If enemy is not dead, it can be damaged
+    	if(!dead) {
+			damaged = true;
+			gettingHitParticleEffect.reset();
+		}
+
     }
 
     public float getCurrentHp() {
@@ -326,7 +367,15 @@ public class Enemie extends ZOrderableSprite {
         this.currentHp = currentHp;
     }
 
-    public float getMaximumHp() {
+	public boolean isDead() {
+		return dead;
+	}
+
+	public void setDead(boolean dead) {
+		this.dead = dead;
+	}
+
+	public float getMaximumHp() {
         return maximumHp;
     }
 
@@ -714,7 +763,39 @@ public class Enemie extends ZOrderableSprite {
         return gettingHitParticleEffectScale;
     }
 
-    public void setGettingHitParticleEffectScale(float gettingHitParticleEffectScale) {
+    public ArrayList<Rectangle> getHitboxList() {
+        return hitboxList;
+    }
+
+    public void setHitboxList(ArrayList<Rectangle> hitboxList) {
+        this.hitboxList = hitboxList;
+    }
+
+    public boolean isDamaged() {
+        return damaged;
+    }
+
+    public void setDamaged(boolean damaged) {
+        this.damaged = damaged;
+    }
+
+	public ArrayList<Sprite> getBulletHitboxSpriteList() {
+		return bulletHitboxSpriteList;
+	}
+
+	public void setBulletHitboxSpriteList(ArrayList<Sprite> bulletHitboxSpriteList) {
+		this.bulletHitboxSpriteList = bulletHitboxSpriteList;
+	}
+
+	public int getExperience() {
+		return experience;
+	}
+
+	public void setExperience(int experience) {
+		this.experience = experience;
+	}
+
+	public void setGettingHitParticleEffectScale(float gettingHitParticleEffectScale) {
 
 		float scaling;
 

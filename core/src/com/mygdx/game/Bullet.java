@@ -63,7 +63,7 @@ public class Bullet extends ZOrderableSprite {
         // If the projectile is not a shadow of another projectile
         if(shadow != null) {
             if(entityId == 0) {
-                checkCollisionForPlayerProjectile(enemieList, floatingTextList);
+                checkCollisionForPlayerProjectile(player, enemieList, floatingTextList);
                 // Enemie generated the bullet
             } else {
                 checkCollisionForEnemieProjectile(player, floatingTextList);
@@ -71,25 +71,37 @@ public class Bullet extends ZOrderableSprite {
         }
     }
 
-    public void checkCollisionForPlayerProjectile(ArrayList<Enemie> enemieList, ArrayList<FloatingText> floatingTextList) {
+    public void checkCollisionForPlayerProjectile(Player player, ArrayList<Enemie> enemieList, ArrayList<FloatingText> floatingTextList) {
         for(Enemie enemie : enemieList) {
             float x1 = centerX - (bulletSprite.getBoundingRectangle().getWidth() / 2);
             float y1 = centerY - (bulletSprite.getBoundingRectangle().getHeight() / 2);
             float x2 = centerX + (bulletSprite.getBoundingRectangle().getWidth() / 2);
             float y2 = centerY + (bulletSprite.getBoundingRectangle().getHeight() / 2);
-            // The projectile is inside the hitbox
-            if (checkIfPointIsInsideRectangle(x1, y1, enemie.getHitbox()) || checkIfPointIsInsideRectangle(x2, y2, enemie.getHitbox())) {
-                // The projectile is still active
-                if(!dead) {
-                    FloatingText damageText = new FloatingText("-"+damage, enemie.getHitbox().getCenterX(), enemie.getHitbox().getCenterY()+20);
-                    damageText.setTextColor(Color.RED);
-                    floatingTextList.add(damageText);
-                    enemie.setCurrentHp(enemie.getCurrentHp() - damage);
-                    enemie.gotDamaged();
-                    dead = true;
-                    shadow.setDead(true);
+            for(Rectangle bulletHitbox : enemie.getHitboxList()) {
+                // The projectile is inside the hitbox
+                if (checkIfPointIsInsideRectangle(x1, y1, bulletHitbox) || checkIfPointIsInsideRectangle(x2, y2, bulletHitbox)) {
+                    // The projectile is still active
+                    if(!dead) {
+                        FloatingText damageText = new FloatingText("-"+damage, enemie.getHitbox().getCenterX(), enemie.getHitbox().getCenterY()+20);
+                        damageText.setTextColor(Color.RED);
+                        floatingTextList.add(damageText);
+                        enemie.setCurrentHp(enemie.getCurrentHp() - damage);
+                        enemie.gotDamaged();
+                        // If enemie hp is equal or lower than 0 and the enemie is not dead yet, the enemie is dead now
+                        if(enemie.currentHp <= 0 && !enemie.isDead()) {
+                            enemie.setDead(true);
+                            FloatingText experienceText = new FloatingText(enemie.getExperience()+" EXP", player.getHitbox().getCenterX(), player.getHitbox().getCenterY()+20);
+                            experienceText .setTextColor(Color.GREEN);
+                            floatingTextList.add(experienceText);
+                        }
+                        // Elimate this bullet
+                        dead = true;
+                        // Eliminate projectile's shadow
+                        shadow.setDead(true);
+                    }
                 }
             }
+
         }
     }
 

@@ -63,9 +63,11 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		colorHashMap = createColorHashMap();
 
 		// Create font
-		font = createFont("dungeon_font.ttf", FONT_SIZE);
-		font.setUseIntegerPositions(false);
+		//font = createFont("dungeon_font.ttf", FONT_SIZE);
+		//font.setUseIntegerPositions(false);
 		//font.getRegion().getTexture().setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+		font = new BitmapFont(Gdx.files.internal("mana_font.fnt"), false);
+		font.getData().setScale(0.1f, 0.1f);
 
 		// Initialize light array list
 		lightArrayList = new ArrayList<Light>();
@@ -87,7 +89,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		camera=new OrthographicCamera();
 		camera.setToOrtho(false,Gdx.graphics.getWidth(),Gdx.graphics.getHeight());
 		camera.viewportHeight = 415;
-		camera.viewportWidth = 690;
+		camera.viewportWidth = 680;
 
 		// Initialize sprite batch
 		spriteBatch=new SpriteBatch();
@@ -160,11 +162,15 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		String particlesFolder = "particle_effects";
 		float walkingFrameDuration = 0.3f;
 		Enemie enemie = new Enemie(hitbox, moveSpeed, spriteSheetPath, projectileTexturePath, walkingPEPath, gettingHitPEPath, particlesFolder, walkingFrameDuration);
+		enemie.addHitBox(600, 200, 7, 14);
+		enemie.addHitBox(607, 200, 11, 20);
+		enemie.addHitBox(618, 200, 7, 14);
 		// HP bar and some stats
 		enemie.setHpBar(hpBar);
 		enemie.setCurrentHp(20);
 		enemie.setMaximumHp(20);
 		enemie.setBaseDamage(2);
+		enemie.setExperience(1);
 		// Enemie sprite positioning
 		enemie.setSpriteWidth(100);
 		enemie.setSpriteHeight(100);
@@ -206,11 +212,15 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 			particlesFolder = "particle_effects";
 			walkingFrameDuration = 0.3f;
 			enemie = new Enemie(hitbox, moveSpeed, spriteSheetPath, projectileTexturePath, walkingPEPath, gettingHitPEPath, particlesFolder, walkingFrameDuration);
+			enemie.addHitBox(600, 200, 14, 28);
+			enemie.addHitBox(614, 200, 22, 40);
+			enemie.addHitBox(636, 200, 14, 28);
 			// HP bar and some stats
 			enemie.setHpBar(hpBar);
 			enemie.setCurrentHp(50);
             enemie.setMaximumHp(50);
 			enemie.setBaseDamage(3);
+			enemie.setExperience(6);
 			// Enemie sprite positioning
 			enemie.setSpriteWidth(200);
 			enemie.setSpriteHeight(200);
@@ -253,6 +263,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		fontParameter.borderColor = colorHashMap.get("BLACK");
 		fontParameter.borderWidth = 1;
 		fontParameter.color = colorHashMap.get("WHITE");
+		//fontParameter.genMipMaps = true;
 		return fontGenerator.generateFont(fontParameter);
 	}
 
@@ -308,6 +319,16 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 			if(floatingText.isDead()) {
 				floatingTextListIterator.remove();
 				floatingTextList.remove(floatingText);
+			}
+		}
+
+		// Remove dead enemies
+		Iterator<Enemie> enemieIterator= enemieList.iterator();
+		while(enemieIterator.hasNext()) {
+			Enemie enemie = enemieIterator.next();
+			if(enemie.isDead() && enemie.getGettingHitParticleEffect().isComplete()) {
+				enemieIterator.remove();
+				zOrderableSpriteList.remove(enemie);
 			}
 		}
 	}

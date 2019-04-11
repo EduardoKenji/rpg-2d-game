@@ -47,6 +47,7 @@ public class Player extends ZOrderableSprite {
     float currentHp, maximumHp;
     float currentShield, maximumShield;
     HpBar hpBar;
+    int experience;
 
     // Player projectiles properties
     int shootingPattern = 0;
@@ -76,7 +77,7 @@ public class Player extends ZOrderableSprite {
         // Default direction
         direction = "playerWalkRight";
         // Default attack delay, attack timer will be incremented with elapsed time
-        attackDelay = 1f;
+        attackDelay = 0.3f;
         attackTimer = attackDelay;
         // Player projectile stats
         projectileSpeed = 4f;
@@ -494,4 +495,12 @@ public class Player extends ZOrderableSprite {
 	public void setGettingHitParticleEffectScale(float gettingHitParticleEffectScale) {
 		this.gettingHitParticleEffectScale = gettingHitParticleEffectScale;
 	}
+
+    public int getExperience() {
+        return experience;
+    }
+
+    public void setExperience(int experience) {
+        this.experience = experience;
+    }
 }
