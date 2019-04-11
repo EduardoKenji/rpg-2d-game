@@ -18,7 +18,7 @@ public class Enemie extends ZOrderableSprite {
     // Enemie stats
     float moveSpeed;
     float attackDelay, attackTimer;
-    float baseDamage;
+    int baseDamage;
     float currentHp, maximumHp;
     float currentShield, maximumShield;
     HpBar hpBar;
@@ -62,7 +62,12 @@ public class Enemie extends ZOrderableSprite {
 
     // Walking particle effect
     ParticleEffect walkingParticleEffect;
-    float particleEffectScale;
+    float walkingParticleEffectScale;
+
+    // Getting hit particle effect
+    ParticleEffect gettingHitParticleEffect;
+    float gettingHitParticleEffectScale;
+    boolean damaged;
 
     // Animations from sprite sheets with enemies facing left or facing right
     MyAnimation faceLeft, faceRight;
@@ -78,7 +83,7 @@ public class Enemie extends ZOrderableSprite {
     // boolean to check if enemy is moving
     boolean isMoving;
 
-    public Enemie(Rectangle hitbox, float moveSpeed, String spriteSheetPath, String projectileTexturePath, String walkingPEPath, String walkingPEFolder, float walkingFrameDuration) {
+    public Enemie(Rectangle hitbox, float moveSpeed, String spriteSheetPath, String projectileTexturePath, String walkingPEPath,  String gettingHitPEPath, String particleFolder, float walkingFrameDuration) {
         super(hitbox.getY());
         // Enemie hitbox
         this.hitbox = hitbox;
@@ -106,7 +111,11 @@ public class Enemie extends ZOrderableSprite {
 
         // Walking particle effect
         walkingParticleEffect = new ParticleEffect();
-        walkingParticleEffect.load(Gdx.files.internal(walkingPEPath), Gdx.files.internal(walkingPEFolder));
+        walkingParticleEffect.load(Gdx.files.internal(walkingPEPath), Gdx.files.internal(particleFolder));
+
+        // Getting hit particle effect
+        gettingHitParticleEffect = new ParticleEffect();
+        gettingHitParticleEffect.load(Gdx.files.internal(gettingHitPEPath), Gdx.files.internal(particleFolder));
 
         // Boolean to check if enemy is moving
         isMoving = false;
@@ -127,7 +136,7 @@ public class Enemie extends ZOrderableSprite {
     public void draw(SpriteBatch spriteBatch) {
 
         // Draw walking particle effect if enemie is moving
-        walkingParticleEffect.scaleEffect(particleEffectScale);
+        walkingParticleEffect.scaleEffect(walkingParticleEffectScale);
         if(isMoving) {
             walkingParticleEffect.draw(spriteBatch);
         }
@@ -139,9 +148,14 @@ public class Enemie extends ZOrderableSprite {
             faceRight.draw(spriteBatch, hitbox.getX()+xOffset, hitbox.getY()+yOffset, spriteWidth, spriteHeight);
         }
 
+        if(damaged) {
+            gettingHitParticleEffect.scaleEffect(gettingHitParticleEffectScale);
+            gettingHitParticleEffect.draw(spriteBatch);
+        }
+
         hpBar.draw(spriteBatch);
         // Debug draw player's hitbox sprite (a red empty rectangle)
-        //hitboxSprite.draw(spriteBatch);
+        hitboxSprite.draw(spriteBatch);
     }
 
     // Update a lot of player stats and properties
@@ -170,17 +184,33 @@ public class Enemie extends ZOrderableSprite {
         faceLeft.update();
         faceRight.update();
 
-        // Update walking particle effect
-        walkingParticleEffect.update(Gdx.graphics.getDeltaTime());
-        if(walkingParticleEffect.isComplete()) {
-            walkingParticleEffect.reset();
-        }
+        // Update particles
+        updateParticles();
 
         // Update enemie position
         updatePosition();
         // Update hp bar
         hpBar.update(currentHp, maximumHp, currentShield, maximumShield);
         hpBar.updatePosition(hitbox.getX(), hitbox.getY() - 7);
+    }
+
+    // Update particles, called on draw()
+    public void updateParticles() {
+
+        // Update walking particle effect
+        walkingParticleEffect.update(Gdx.graphics.getDeltaTime());
+        if(walkingParticleEffect.isComplete()) {
+            walkingParticleEffect.reset();
+        }
+
+        // Update getting hit particle effect
+        if(damaged) {
+            gettingHitParticleEffect.update(Gdx.graphics.getDeltaTime());
+            if(gettingHitParticleEffect.isComplete()) {
+                damaged = false;
+                gettingHitParticleEffect.reset();
+            }
+        }
     }
 
     float angleToWalk;
@@ -240,7 +270,7 @@ public class Enemie extends ZOrderableSprite {
             // The player entity id is 0
             // Rotate projectile boolean controls is the new bullet should or not be rotated
             if(bulletController == null) {
-                bulletController = new BulletController(angle, shootingPattern);
+                bulletController = new BulletController(angle, shootingPattern, baseDamage);
             }
             bulletController.setAngle(angle);
             bulletController.setBulletHitbox(bulletHitbox);
@@ -258,7 +288,10 @@ public class Enemie extends ZOrderableSprite {
 
     public void updatePosition() {
         hitboxSprite.setPosition(hitbox.getX(), hitbox.getY());
+        // Update walking PE position
         walkingParticleEffect.setPosition(hitbox.getCenterX(), hitbox.getY());
+        // Update getting hit PE position
+        gettingHitParticleEffect.setPosition(hitbox.getCenterX(), hitbox.getCenterY());
         setX(hitbox.getX());
         setY(hitbox.getY());
     }
@@ -278,6 +311,11 @@ public class Enemie extends ZOrderableSprite {
 
     public float euclidianDistance(float x1, float y1, float x2, float y2) {
         return (float)(Math.sqrt(Math.pow(x1-x2, 2)+Math.pow(y1-y2, 2)));
+    }
+
+    public void gotDamaged() {
+        damaged = true;
+        gettingHitParticleEffect.reset();
     }
 
     public float getCurrentHp() {
@@ -456,12 +494,8 @@ public class Enemie extends ZOrderableSprite {
         isMoving = moving;
     }
 
-    public void setParticleEffectScale(float particleEffectScale) {
-        this.particleEffectScale = particleEffectScale;
-    }
-
-    public float getParticleEffectScale() {
-        return particleEffectScale;
+    public void setWalkingParticleEffectScale(float particleEffectScale) {
+        this.walkingParticleEffectScale = particleEffectScale;
     }
 
     public Rectangle getHitbox() {
@@ -504,11 +538,11 @@ public class Enemie extends ZOrderableSprite {
         this.attackTimer = attackTimer;
     }
 
-    public float getBaseDamage() {
+    public int getBaseDamage() {
         return baseDamage;
     }
 
-    public void setBaseDamage(float baseDamage) {
+    public void setBaseDamage(int baseDamage) {
         this.baseDamage = baseDamage;
     }
 
@@ -662,5 +696,37 @@ public class Enemie extends ZOrderableSprite {
 
     public void setProjectileShadowTexture(Texture projectileShadowTexture) {
         this.projectileShadowTexture = projectileShadowTexture;
+    }
+
+    public ParticleEffect getGettingHitParticleEffect() {
+        return gettingHitParticleEffect;
+    }
+
+    public void setGettingHitParticleEffect(ParticleEffect gettingHitParticleEffect) {
+        this.gettingHitParticleEffect = gettingHitParticleEffect;
+    }
+
+    public float getWalkingParticleEffectScale() {
+        return walkingParticleEffectScale;
+    }
+
+    public float getGettingHitParticleEffectScale() {
+        return gettingHitParticleEffectScale;
+    }
+
+    public void setGettingHitParticleEffectScale(float gettingHitParticleEffectScale) {
+
+		float scaling;
+
+		scaling = gettingHitParticleEffect.getEmitters().get(0).getXScale().getHighMax();
+		gettingHitParticleEffect.getEmitters().get(0).getXScale().setHigh(scaling * gettingHitParticleEffectScale);
+
+		scaling = gettingHitParticleEffect.getEmitters().get(0).getVelocity().getHighMax();
+		gettingHitParticleEffect.getEmitters().get(0).getVelocity().setHigh(scaling * gettingHitParticleEffectScale);
+
+		scaling = gettingHitParticleEffect.getEmitters().get(0).getVelocity().getLowMax();
+		gettingHitParticleEffect.getEmitters().get(0).getVelocity().setLow(scaling * gettingHitParticleEffectScale);
+
+        this.gettingHitParticleEffectScale = gettingHitParticleEffectScale;
     }
 }

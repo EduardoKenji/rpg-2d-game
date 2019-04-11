@@ -24,9 +24,9 @@ public class HpBar {
     }
 
     public void draw(SpriteBatch spriteBatch) {
-        spriteBatch.draw(blackBar, position.getX()-halfDifWidth, position.getY(), position.getWidth()+difWidth, 5);
-        spriteBatch.draw(greenBar, position.getX()-halfDifWidth, position.getY(), position.getWidth()*(hpPercentage)+difWidth, 5);
-        spriteBatch.draw(blueBar, position.getX()-halfDifWidth, position.getY(), position.getWidth()*(shieldPercentage)+difWidth, 5);
+        spriteBatch.draw(blackBar, position.getX()-halfDifWidth, position.getY(), (position.getWidth()+difWidth), 5);
+        spriteBatch.draw(greenBar, position.getX()-halfDifWidth, position.getY(), (position.getWidth()+difWidth)*(hpPercentage), 5);
+        spriteBatch.draw(blueBar, position.getX()-halfDifWidth, position.getY(), (position.getWidth()+difWidth)*(shieldPercentage), 5);
     }
 
     public void updatePosition(float x, float y) {
@@ -36,7 +36,9 @@ public class HpBar {
 
     public void update(float currentHp, float maximumHp, float currentShield, float maximumShield) {
         hpPercentage = currentHp/maximumHp;
+        if(hpPercentage < 0) hpPercentage = 0;
         shieldPercentage = currentShield/maximumShield;
+        if(shieldPercentage < 0) shieldPercentage = 0;
     }
 
     public Rectangle getPosition() {

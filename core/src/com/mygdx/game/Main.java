@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 
 public class Main extends ApplicationAdapter implements InputProcessor {
 
@@ -50,10 +49,12 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 	ArrayList<MapObject> mapObjectList;
 	// ZOrderableSprite list: All sprites from static and dynamic (player, enemies, items, projectiles) ordered according to y value
 	ArrayList<ZOrderableSprite> zOrderableSpriteList;
+	// Floating text list
+	ArrayList<FloatingText> floatingTextList;
 	// Comparator used to compare the Z axis for sprites via Y coordinate comparisons
 	ZAxisComparator zAxisComparator;
  	// Font size
-	final int FONT_SIZE = 30;
+	final int FONT_SIZE = 15;
 
 	@Override
 	public void create() {
@@ -62,13 +63,18 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		colorHashMap = createColorHashMap();
 
 		// Create font
-		font = createFont("dungeonFont.ttf", FONT_SIZE);
+		font = createFont("dungeon_font.ttf", FONT_SIZE);
+		font.setUseIntegerPositions(false);
+		//font.getRegion().getTexture().setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
 
 		// Initialize light array list
 		lightArrayList = new ArrayList<Light>();
 
 		// Initialize map object list
 		mapObjectList = new ArrayList<MapObject>();
+
+		// Initialize floating text list
+		floatingTextList = new ArrayList<FloatingText>();
 
 		// Initialize z-orderable sprite list
 		zOrderableSpriteList = new ArrayList<ZOrderableSprite>();
@@ -80,6 +86,8 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		// Create and configure camera
 		camera=new OrthographicCamera();
 		camera.setToOrtho(false,Gdx.graphics.getWidth(),Gdx.graphics.getHeight());
+		camera.viewportHeight = 415;
+		camera.viewportWidth = 690;
 
 		// Initialize sprite batch
 		spriteBatch=new SpriteBatch();
@@ -110,8 +118,9 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		player = new Player(new Rectangle(300, 300, 17, 28), 2);
         HpBar hpBar = new HpBar( new Rectangle(300, 293, 17, 28), hpBarsTextures);
         player.setHpBar(hpBar);
-        player.setCurrentHp(200);
-        player.setMaximumHp(200);
+        player.setCurrentHp(40);
+        player.setMaximumHp(40);
+        player.setBaseDamage(20);
 		zOrderableSpriteList.add(player);
 
 		// Day night cycle starts at 12:00 A.M.
@@ -145,20 +154,24 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		float moveSpeed = 0.7f;
 		String spriteSheetPath = "characters/enemies/blue_slime.png";
 		String projectileTexturePath = "projectiles/blue_slime_projectile.png";
-		String walkingPEPath = "textures/walking_on_dirty_particles.pe";
-		String walkingPEFolder = "textures";
+		String walkingPEPath = "particle_effects/walking_on_dirty.pe";
+		String gettingHitPEPath = "particle_effects/blue_slime_blood.pe";
+		// Particles folder
+		String particlesFolder = "particle_effects";
 		float walkingFrameDuration = 0.3f;
-		Enemie enemie = new Enemie(hitbox, moveSpeed, spriteSheetPath, projectileTexturePath, walkingPEPath, walkingPEFolder, walkingFrameDuration);
-		// HP bar
+		Enemie enemie = new Enemie(hitbox, moveSpeed, spriteSheetPath, projectileTexturePath, walkingPEPath, gettingHitPEPath, particlesFolder, walkingFrameDuration);
+		// HP bar and some stats
 		enemie.setHpBar(hpBar);
 		enemie.setCurrentHp(20);
 		enemie.setMaximumHp(20);
+		enemie.setBaseDamage(2);
 		// Enemie sprite positioning
 		enemie.setSpriteWidth(100);
 		enemie.setSpriteHeight(100);
 		enemie.setxOffset(-37.5f);
 		enemie.setyOffset(-8);
-		enemie.setParticleEffectScale(0.6f);
+		enemie.setWalkingParticleEffectScale(0.6f);
+		enemie.setGettingHitParticleEffectScale(0.6f);
 		// AI properties
 		// 1: Hostile random walking AI: the enemie will either stay idle or walk around randomly
 		enemie.setEnemieId(1000);
@@ -181,32 +194,33 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		enemieList.add(enemie);
 		zOrderableSpriteList.add(enemie);
 
-		for(int i = 0; i < 100; i++) {
+		for(int i = 0; i < 2; i++) {
 			// Mother blue slime
 			hitbox = new Rectangle(600, 200, 50, 40);
 			hpBar = new HpBar( new Rectangle(600, 193, 50, 40), hpBarsTextures);
 			moveSpeed = 0.7f;
 			spriteSheetPath = "characters/enemies/blue_slime.png";
 			projectileTexturePath = "projectiles/blue_slime_projectile.png";
-			walkingPEPath = "textures/walking_on_dirty_particles.pe";
-			walkingPEFolder = "textures";
+			walkingPEPath = "particle_effects/walking_on_dirty.pe";
+			gettingHitPEPath = "particle_effects/blue_slime_blood.pe";
+			particlesFolder = "particle_effects";
 			walkingFrameDuration = 0.3f;
-			enemie = new Enemie(hitbox, moveSpeed, spriteSheetPath, projectileTexturePath, walkingPEPath, walkingPEFolder, walkingFrameDuration);
-			// HP bar
+			enemie = new Enemie(hitbox, moveSpeed, spriteSheetPath, projectileTexturePath, walkingPEPath, gettingHitPEPath, particlesFolder, walkingFrameDuration);
+			// HP bar and some stats
 			enemie.setHpBar(hpBar);
 			enemie.setCurrentHp(50);
             enemie.setMaximumHp(50);
-            enemie.setCurrentShield((float)(Math.random()*50));
-            enemie.setMaximumShield(50);
+			enemie.setBaseDamage(3);
 			// Enemie sprite positioning
 			enemie.setSpriteWidth(200);
 			enemie.setSpriteHeight(200);
 			enemie.setxOffset(-75);
 			enemie.setyOffset(-16);
-			enemie.setParticleEffectScale(1f);
+			enemie.setWalkingParticleEffectScale(1f);
+			enemie.setGettingHitParticleEffectScale(1f);
 			// AI properties
 			// 2: Hostile spawner random walking AI: the enemie will either stay idle or walk around randomly
-			enemie.setEnemieId(1000);
+			enemie.setEnemieId(1001);
 			enemie.setAiType(1);
 			enemie.setHostileRange(250f);
 			enemie.setPlayer(player);
@@ -236,7 +250,9 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		FreeTypeFontGenerator fontGenerator = new FreeTypeFontGenerator(Gdx.files.internal(fontName));
 		FreeTypeFontGenerator.FreeTypeFontParameter fontParameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
 		fontParameter.size = fontSize;
-		fontParameter.color = colorHashMap.get("BLUE");
+		fontParameter.borderColor = colorHashMap.get("BLACK");
+		fontParameter.borderWidth = 1;
+		fontParameter.color = colorHashMap.get("WHITE");
 		return fontGenerator.generateFont(fontParameter);
 	}
 
@@ -272,10 +288,10 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		drawLight(spriteBatch);
 
 		// Remove projectiles
-		removeProjectiles();
+		removeObjects();
 	}
 
-	public void removeProjectiles() {
+	public void removeObjects() {
 		// Projectile list to remove bullets/projectiles without concurrence problems
 		Iterator<Bullet> projectileListIterator = projectileList.iterator();
 		while(projectileListIterator.hasNext()) {
@@ -283,6 +299,15 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 			if(projectile.isDead()) {
 				projectileListIterator.remove();
 				zOrderableSpriteList.remove(projectile);
+			}
+		}
+		// Remove floating texts
+		Iterator<FloatingText> floatingTextListIterator = floatingTextList.iterator();
+		while(floatingTextListIterator.hasNext()) {
+			FloatingText floatingText = floatingTextListIterator.next();
+			if(floatingText.isDead()) {
+				floatingTextListIterator.remove();
+				floatingTextList.remove(floatingText);
 			}
 		}
 	}
@@ -299,9 +324,16 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		// Update Day/Night cycle
 		dayNightCycle.updateTime();
 		dayNightCycle.updateRGBValues();
+		// Update floating texts
+		for(FloatingText floatingText : floatingTextList) {
+			floatingText.update();
+		}
 		// Update projectiles
 		for(Bullet projectile : projectileList) {
+			// Update position
 			projectile.update();
+			// Check for collision
+			projectile.checkForCollision(player, enemieList, floatingTextList);
 		}
 		// Update enemies
 		for(Enemie enemie : enemieList) {
@@ -315,8 +347,6 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 
 		// Update sprites in Z order
 		Collections.sort(zOrderableSpriteList, zAxisComparator);
-
-		//System.out.println(zOrderableSpriteList.size());
 	}
 
 	// Draw player, enemies, projectiles, npcs, map, and so forth
@@ -330,6 +360,10 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 			if(euclidianDistance(sprite.getX(), sprite.getY(), player.getHitbox().getCenterX(), player.getHitbox().getCenterY()) < 600) {
 				sprite.draw(spriteBatch);
 			}
+		}
+		// Draw floating texts
+		for(FloatingText floatingText : floatingTextList) {
+			floatingText.draw(spriteBatch, font);
 		}
 		spriteBatch.end();
 	}

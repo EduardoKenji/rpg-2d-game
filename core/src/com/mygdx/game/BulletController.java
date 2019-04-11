@@ -17,10 +17,13 @@ public class BulletController {
     float projectileSpeed, projectileLifeTime;
     // Entity id that generated the bullet
     int entityId;
+    // Bullet damage
+    int damage;
 
-    public BulletController(float angle, int shootingPattern) {
+    public BulletController(float angle, int shootingPattern, int damage) {
         this.angle = angle;
         this.shootingPattern = shootingPattern;
+        this.damage = damage;
     }
 
     public void createBullets(ArrayList<Bullet> projectileList, ArrayList<ZOrderableSprite> zOrderableSpriteList, boolean rotateProjectile) {
@@ -37,8 +40,8 @@ public class BulletController {
             for(int i = -15; i < 16; i+=15) {
                 Sprite bulletSprite = new Sprite(projectileTexture);
                 Sprite bulletShadowSprite = new Sprite(projectileShadowTexture);
-                Bullet bullet = new Bullet(bulletSprite, bulletHitbox, projectileSpeed, projectileLifeTime, angle+i, entityId);
-                Bullet bulletShadow = new Bullet(bulletShadowSprite,bulletShadowHitbox, projectileSpeed, projectileLifeTime, angle+i, entityId);
+                Bullet bulletShadow = new Bullet(bulletShadowSprite,bulletShadowHitbox, projectileSpeed, projectileLifeTime, damage,angle+i, entityId, null);
+				Bullet bullet = new Bullet(bulletSprite, bulletHitbox, projectileSpeed, projectileLifeTime, damage,angle+i, entityId, bulletShadow);
                 projectileList.add(bullet);
                 projectileList.add(bulletShadow);
                 zOrderableSpriteList.add(bullet);
@@ -51,13 +54,12 @@ public class BulletController {
         if(rotateProjectile) {
             Sprite bulletSprite = new Sprite(projectileTexture);
             Sprite bulletShadowSprite = new Sprite(projectileShadowTexture);
-            Bullet bullet = new Bullet(bulletSprite, bulletHitbox, projectileSpeed, projectileLifeTime, angle, entityId);
-            Bullet bulletShadow = new Bullet(bulletShadowSprite,bulletShadowHitbox, projectileSpeed, projectileLifeTime, angle, entityId);
+			Bullet bulletShadow = new Bullet(bulletShadowSprite,bulletShadowHitbox, projectileSpeed, projectileLifeTime, damage, angle, entityId, null);
+            Bullet bullet = new Bullet(bulletSprite, bulletHitbox, projectileSpeed, projectileLifeTime, damage, angle, entityId, bulletShadow);
             projectileList.add(bullet);
             projectileList.add(bulletShadow);
             zOrderableSpriteList.add(bullet);
             zOrderableSpriteList.add(bulletShadow);
-
         }
     }
 

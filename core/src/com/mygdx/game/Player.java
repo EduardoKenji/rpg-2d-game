@@ -20,6 +20,13 @@ public class Player extends ZOrderableSprite {
 
     // Walking on dirty particle effect
     ParticleEffect walkingParticleEffect;
+	float walkingParticleEffectScale;
+
+    // Getting hit particle effect
+    ParticleEffect gettingHitParticleEffect;
+	float gettingHitParticleEffectScale;
+    // Boolean to check if got hit
+    boolean damaged;
 
     // Direction
     String direction;
@@ -36,7 +43,7 @@ public class Player extends ZOrderableSprite {
     int playerId;
     float moveSpeed;
     float attackDelay, attackTimer;
-    float baseDamage;
+    int baseDamage;
     float currentHp, maximumHp;
     float currentShield, maximumShield;
     HpBar hpBar;
@@ -69,7 +76,7 @@ public class Player extends ZOrderableSprite {
         // Default direction
         direction = "playerWalkRight";
         // Default attack delay, attack timer will be incremented with elapsed time
-        attackDelay = 0.8f;
+        attackDelay = 1f;
         attackTimer = attackDelay;
         // Player projectile stats
         projectileSpeed = 4f;
@@ -87,7 +94,13 @@ public class Player extends ZOrderableSprite {
         projectileShadowTexture = new Texture("projectiles/shadow_projectile.png");
         // Walking on dirt/grass particle effect
         walkingParticleEffect = new ParticleEffect();
-        walkingParticleEffect.load(Gdx.files.internal("textures/walking_on_dirty_particles.pe"), Gdx.files.internal("textures"));
+        walkingParticleEffect.load(Gdx.files.internal("particle_effects/walking_on_dirty.pe"), Gdx.files.internal("particle_effects"));
+		// Getting hit particle effect
+		gettingHitParticleEffect = new ParticleEffect();
+		gettingHitParticleEffect.load(Gdx.files.internal("particle_effects/player_blood.pe"), Gdx.files.internal("particle_effects"));
+		damaged = false;
+		walkingParticleEffectScale = 0.7f;
+		gettingHitParticleEffectScale = 0.25f;
     }
 
     // Create player boolean animation map
@@ -128,7 +141,7 @@ public class Player extends ZOrderableSprite {
 
         // Draw walking on dirty particle effects
         if(isWalking() && !isWalkingAtSimultaneousOpposingDirections()) {
-            walkingParticleEffect.scaleEffect(0.7f);
+            walkingParticleEffect.scaleEffect(walkingParticleEffectScale);
             walkingParticleEffect.draw(spriteBatch);
         }
 
@@ -143,6 +156,11 @@ public class Player extends ZOrderableSprite {
         if((!playerBooleanHashMap.get("isTouchedDown") && isWalkingAtSimultaneousOpposingDirections()) || (!playerBooleanHashMap.get("isTouchedDown") && !isWalking())) {
             playerAnimationHashMap.get(direction).draw(spriteBatch, hitbox.getX()+xOffset, hitbox.getY()+yOffset, spriteWidth, spriteHeight);
         }
+
+		if(damaged) {
+			gettingHitParticleEffect.scaleEffect(gettingHitParticleEffectScale);
+			gettingHitParticleEffect.draw(spriteBatch);
+		}
 
         hpBar.draw(spriteBatch);
 
@@ -223,11 +241,9 @@ public class Player extends ZOrderableSprite {
                 playerAnimationHashMap.get(entry.getKey()).update();
             }
         }
-        // Update walking on dirty particle
-        walkingParticleEffect.update(Gdx.graphics.getDeltaTime());
-        if(walkingParticleEffect.isComplete() && isWalking()) {
-            walkingParticleEffect.reset();
-        }
+
+        // Update particles
+		updateParticles();
 
         // Update player position
         updatePosition();
@@ -241,6 +257,24 @@ public class Player extends ZOrderableSprite {
         // Attack timer will be incremented with elapsed time
         attackTimer += Gdx.graphics.getDeltaTime();
     }
+
+	// Update particles, called on draw()
+    public void updateParticles() {
+		// Update walking particle effect
+		walkingParticleEffect.update(Gdx.graphics.getDeltaTime());
+		if(walkingParticleEffect.isComplete() && isWalking()) {
+			walkingParticleEffect.reset();
+		}
+
+		// Update getting hit particle effect
+		if(damaged) {
+			gettingHitParticleEffect.update(Gdx.graphics.getDeltaTime());
+			if(gettingHitParticleEffect.isComplete()) {
+				damaged = false;
+				gettingHitParticleEffect.reset();
+			}
+		}
+	}
 
     // Verify if player can generate another projectile and create it, if possible
     public void updateAttack(ArrayList<Bullet> projectileList, ArrayList<ZOrderableSprite> zOrderableSpriteList) {
@@ -257,7 +291,7 @@ public class Player extends ZOrderableSprite {
             // The player entity id is 0
             // Rotate projectile boolean controls is the new bullet should or not be rotated
             if(bulletController == null) {
-                bulletController = new BulletController(angle, shootingPattern);
+                bulletController = new BulletController(angle, shootingPattern, baseDamage);
             }
             bulletController.setAngle(angle);
             bulletController.setBulletHitbox(bulletHitbox);
@@ -318,6 +352,8 @@ public class Player extends ZOrderableSprite {
         setY(hitbox.getY());
         // Update walking on dirt/grass particle effect position to the center of the player's hitbox
         walkingParticleEffect.setPosition(hitbox.getCenterX(), hitbox.getY()-5);
+		// Update getting hit particle effect position to the center of the player's hitbox
+		gettingHitParticleEffect.setPosition(hitbox.getCenterX(), hitbox.getCenterY());
         // Update player's debug hitbox sprite position
         hitboxSprite.setPosition(hitbox.getX(), hitbox.getY());
     }
@@ -370,6 +406,11 @@ public class Player extends ZOrderableSprite {
         }
     }
 
+    public void gotDamaged() {
+    	damaged = true;
+    	gettingHitParticleEffect.reset();
+	}
+
     public float getCurrentHp() {
         return currentHp;
     }
@@ -409,4 +450,48 @@ public class Player extends ZOrderableSprite {
     public void setHpBar(HpBar hpBar) {
         this.hpBar = hpBar;
     }
+
+    public int getBaseDamage() {
+        return baseDamage;
+    }
+
+    public void setBaseDamage(int baseDamage) {
+        this.baseDamage = baseDamage;
+    }
+
+    public ParticleEffect getWalkingParticleEffect() {
+        return walkingParticleEffect;
+    }
+
+    public void setWalkingParticleEffect(ParticleEffect walkingParticleEffect) {
+        this.walkingParticleEffect = walkingParticleEffect;
+    }
+
+    public ParticleEffect getGettingHitParticleEffect() {
+        return gettingHitParticleEffect;
+    }
+
+    public void setGettingHitParticleEffect(ParticleEffect gettingHitParticleEffect) {
+        this.gettingHitParticleEffect = gettingHitParticleEffect;
+    }
+
+	public boolean isDamaged() {
+		return damaged;
+	}
+
+	public float getWalkingParticleEffectScale() {
+		return walkingParticleEffectScale;
+	}
+
+	public void setWalkingParticleEffectScale(float walkingParticleEffectScale) {
+		this.walkingParticleEffectScale = walkingParticleEffectScale;
+	}
+
+	public float getGettingHitParticleEffectScale() {
+		return gettingHitParticleEffectScale;
+	}
+
+	public void setGettingHitParticleEffectScale(float gettingHitParticleEffectScale) {
+		this.gettingHitParticleEffectScale = gettingHitParticleEffectScale;
+	}
 }
