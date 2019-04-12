@@ -53,8 +53,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 	ArrayList<FloatingText> floatingTextList;
 	// Comparator used to compare the Z axis for sprites via Y coordinate comparisons
 	ZAxisComparator zAxisComparator;
- 	// Font size
-	final int FONT_SIZE = 15;
+
 
 	@Override
 	public void create() {
@@ -88,8 +87,8 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		// Create and configure camera
 		camera=new OrthographicCamera();
 		camera.setToOrtho(false,Gdx.graphics.getWidth(),Gdx.graphics.getHeight());
-		camera.viewportHeight = 415;
-		camera.viewportWidth = 680;
+		camera.viewportHeight = 400;
+		camera.viewportWidth = 500;
 
 		// Initialize sprite batch
 		spriteBatch=new SpriteBatch();
@@ -117,8 +116,10 @@ public class Main extends ApplicationAdapter implements InputProcessor {
         hpBarsTextures[0] = new Texture("hp_bars/black_bar.png");
         hpBarsTextures[1] = new Texture("hp_bars/green_bar.png");
         hpBarsTextures[2] = new Texture("hp_bars/blue_bar.png");
-		player = new Player(new Rectangle(300, 300, 17, 28), 2);
-        HpBar hpBar = new HpBar( new Rectangle(300, 293, 17, 28), hpBarsTextures);
+
+		player = new Player(new Rectangle(315, 212.5f, 17, 28), 2);
+		player.setScreenToViewport(camera.viewportWidth, camera.viewportHeight);
+        HpBar hpBar = new HpBar( new Rectangle(400, 293, 17, 28), hpBarsTextures);
         player.setHpBar(hpBar);
         player.setCurrentHp(40);
         player.setMaximumHp(40);
@@ -364,6 +365,15 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		player.update(projectileList, zOrderableSpriteList);
 		// Update camera
 		camera.position.set(player.getHitbox().getCenterX(), player.getHitbox().getCenterY(), 0);
+		if(camera.position.x < camera.viewportWidth/2) {
+			camera.position.x = camera.viewportWidth/2;
+		}
+		if(camera.position.y <  camera.viewportHeight/2) {
+			camera.position.y = camera.viewportHeight/2;
+		}
+		player.updateCameraCenterOffset(camera.position.x, camera.position.y);
+
+
 		camera.update();
 
 		// Update sprites in Z order

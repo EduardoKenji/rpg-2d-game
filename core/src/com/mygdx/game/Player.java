@@ -63,6 +63,12 @@ public class Player extends ZOrderableSprite {
     float attackingFrameDuration;
     float walkingFrameDuration;
 
+    // Camera offset
+	float screenToViewportX, screenToViewportY;
+	float cameraCenterOffsetX, cameraCenterOffsetY;
+	float halfViewportWidth, halfViewportHeight;
+	boolean adjustCamera;
+
     public Player(Rectangle hitbox, float moveSpeed) {
         super(hitbox.getY());
         this.hitbox = hitbox;
@@ -102,6 +108,8 @@ public class Player extends ZOrderableSprite {
 		damaged = false;
 		walkingParticleEffectScale = 0.7f;
 		gettingHitParticleEffectScale = 0.25f;
+
+		// Camera
     }
 
     // Create player boolean animation map
@@ -166,7 +174,7 @@ public class Player extends ZOrderableSprite {
         hpBar.draw(spriteBatch);
 
         // Debug draw player's hitbox sprite (a red empty rectangle)
-        //hitboxSprite.draw(spriteBatch);
+        hitboxSprite.draw(spriteBatch);
     }
 
     public void drawPlayerAttackingAnimation(SpriteBatch spriteBatch) {
@@ -208,8 +216,8 @@ public class Player extends ZOrderableSprite {
     // x and y are pointer touch/click coordinates
     public void updateTouchDown(float x, float y) {
         playerBooleanHashMap.put("isTouchedDown", true);
-        pointerX = x;
-        pointerY = y;
+        pointerX = x * screenToViewportX;
+        pointerY = y * screenToViewportY;
         playerAnimationHashMap.get("playerAttackRight").setStateTime(attackingFrameDuration);
         playerAnimationHashMap.get("playerAttackLeft").setStateTime(attackingFrameDuration);
         playerAnimationHashMap.get("playerAttackUp").setStateTime(attackingFrameDuration);
@@ -219,14 +227,12 @@ public class Player extends ZOrderableSprite {
     // x and y are pointer touch/click coordinates
     public void updateTouchUp(float x, float y) {
         playerBooleanHashMap.put("isTouchedDown", false);
-        pointerX = x;
-        pointerY = y;
     }
 
     // x and y are pointer touch/click coordinates
     public void updateTouchDragged(float x, float y) {
-        pointerX = x;
-        pointerY = y;
+        pointerX = x * screenToViewportX;
+        pointerY = y * screenToViewportY;
     }
 
     public Rectangle getHitbox() {
@@ -308,6 +314,21 @@ public class Player extends ZOrderableSprite {
         }
     }
 
+	// Calculate angle to shoot a projectile, between 0 and ~359.99
+	public float calculateAngle() {
+		float difX = (pointerX)-(cameraCenterOffsetX) - (hitbox.getCenterX());
+		float difY = (pointerY)-(cameraCenterOffsetY) - (hitbox.getCenterY());
+
+		System.out.println(("Center: "+hitbox.getCenterX())+", "+(hitbox.getCenterY()));
+		System.out.println("Offset: "+cameraCenterOffsetX+", "+cameraCenterOffsetY);
+		System.out.println(((pointerX)-(cameraCenterOffsetX))+", "+((pointerY)-(cameraCenterOffsetY)));
+		angle = (float)(180.0 / Math.PI * Math.atan2(difY, difX));
+		if(angle < 0) {
+			return 360 + angle;
+		}
+		return angle;
+	}
+
     // Determine the direction that the player is facing while shooting
     public void updateDirectionIfShooting() {
         if(playerBooleanHashMap.get("isTouchedDown")) {
@@ -321,17 +342,6 @@ public class Player extends ZOrderableSprite {
                 direction = "playerWalkDown";
             }
         }
-    }
-
-    // Calculate angle to shoot a projectile, between 0 and ~359.99
-    public float calculateAngle() {
-        float difX = pointerX - (Gdx.graphics.getWidth()/2f);
-        float difY = pointerY - (Gdx.graphics.getHeight()/2f);
-        angle = (float)(180.0 / Math.PI * Math.atan2(difY, difX));
-        if(angle < 0) {
-            return 360 + angle;
-        }
-        return angle;
     }
 
     // Update player's position according to its move speed
@@ -503,4 +513,42 @@ public class Player extends ZOrderableSprite {
     public void setExperience(int experience) {
         this.experience = experience;
     }
+
+	public boolean isAdjustCamera() {
+		return adjustCamera;
+	}
+
+	public void setAdjustCamera(boolean adjustCamera) {
+		this.adjustCamera = adjustCamera;
+	}
+
+	public void setScreenToViewport(float viewportWidth, float viewportHeight) {
+    	screenToViewportX = viewportWidth/Gdx.graphics.getWidth();
+    	screenToViewportY = viewportHeight/Gdx.graphics.getHeight();
+    	halfViewportWidth = (viewportWidth/2);
+    	halfViewportHeight = (viewportHeight/2);
+    	cameraCenterOffsetX = halfViewportWidth-hitbox.getCenterX();
+		cameraCenterOffsetY = halfViewportHeight-hitbox.getCenterY();
+	}
+
+	public void updateCameraCenterOffset(float camX, float camY) {
+		cameraCenterOffsetX = halfViewportWidth - camX;
+		cameraCenterOffsetY = halfViewportHeight - camY;
+	}
+
+	public float getCameraCenterOffsetX() {
+		return cameraCenterOffsetX;
+	}
+
+	public void setCameraCenterOffsetX(float cameraCenterOffsetX) {
+		this.cameraCenterOffsetX = cameraCenterOffsetX;
+	}
+
+	public float getCameraCenterOffsetY() {
+		return cameraCenterOffsetY;
+	}
+
+	public void setCameraCenterOffsetY(float cameraCenterOffsetY) {
+		this.cameraCenterOffsetY = cameraCenterOffsetY;
+	}
 }
