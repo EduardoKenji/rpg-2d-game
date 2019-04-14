@@ -18,6 +18,11 @@ public class Player extends ZOrderableSprite {
     Sprite hitboxSprite;
     HashMap<String, Boolean> playerBooleanHashMap;
 
+    Rectangle mapHitbox;
+	Sprite mapHitboxSprite;
+
+	ArrayList<Rectangle> hitboxCollisionList;
+
     // Walking on dirty particle effect
     ParticleEffect walkingParticleEffect;
 	float walkingParticleEffectScale;
@@ -32,8 +37,8 @@ public class Player extends ZOrderableSprite {
     String direction;
 
     // Constants
-    final float xOffset = -26.5f, yOffset = -5.5f;
-    final float spriteWidth = 70, spriteHeight = 70;
+    final float xOffset = -79.5f, yOffset = -20;
+    final float spriteWidth = 192, spriteHeight = 192;
 
     // Pointer variables
     float pointerX, pointerY;
@@ -60,8 +65,7 @@ public class Player extends ZOrderableSprite {
     final boolean rotateProjectile = true;
 
     // Animation delay to change frames
-    float attackingFrameDuration;
-    float walkingFrameDuration;
+    float frameDuration;
 
     // Camera offset
 	float screenToViewportX, screenToViewportY;
@@ -69,12 +73,17 @@ public class Player extends ZOrderableSprite {
 	float halfViewportWidth, halfViewportHeight;
 	boolean adjustCamera;
 
+	boolean blockedArray[];
+
+	GameMap gameMap;
+
     public Player(Rectangle hitbox, float moveSpeed) {
         super(hitbox.getY());
         this.hitbox = hitbox;
         this.moveSpeed = moveSpeed;
         // Create player hitbox sprite and configure hitbox
         hitboxSprite = new Sprite(new Texture("textures/hitbox.png"));
+        mapHitboxSprite = new Sprite(new Texture("textures/map_hitbox.png"));
         // Hitbox sprite can be drawn for debug reasons
         hitboxSprite.setSize(hitbox.getWidth(), hitbox.getHeight());
         hitboxSprite.setPosition(hitbox.getX(), hitbox.getY());
@@ -86,10 +95,10 @@ public class Player extends ZOrderableSprite {
         attackDelay = 0.3f;
         attackTimer = attackDelay;
         // Player projectile stats
-        projectileSpeed = 4f;
-        projectileLifeTime = 0.38f;
-        projectileWidth = 20;
-        projectileHeight = 2.5f;
+        projectileSpeed = 4.5f;
+        projectileLifeTime = 0.46f;
+        projectileWidth = 36;
+        projectileHeight = 4.5f;
         // Create player boolean animation map
         String attackSpriteSheetPath = "characters/knight_attack_spritesheet.png";
         String walkSpriteSheetPath = "characters/knight_walking_spritesheet.png";
@@ -115,8 +124,8 @@ public class Player extends ZOrderableSprite {
     // Create player boolean animation map
     public void createPlayerAnimationHashMap(String walkSpriteSheetPath, String attackSpriteSheetPath) {
         playerAnimationHashMap = new HashMap<String, MyAnimation>();
-        walkingFrameDuration = 0.3f;
-        attackingFrameDuration = 0.15f;
+        frameDuration = 0.02f;
+        /*
         playerAnimationHashMap.put("playerAttackRight",
                 new MyAnimation(new Texture("characters/knight_attack_spritesheet.png"), 4, 2, attackingFrameDuration, 0, 1));
         playerAnimationHashMap.put("playerAttackLeft",
@@ -126,13 +135,20 @@ public class Player extends ZOrderableSprite {
         playerAnimationHashMap.put("playerAttackDown",
                 new MyAnimation(new Texture("characters/knight_attack_spritesheet.png"), 4, 2, attackingFrameDuration, 4, 5));
         playerAnimationHashMap.put("playerWalkRight",
-                new MyAnimation(new Texture("characters/knight_walking_spritesheet.png"), 4, 2, walkingFrameDuration, 0, 1));
+                new MyAnimation(new Texture("characters/knight_walking_spritesheet.png"), 4, 2, frameDuration, 0, 1));
         playerAnimationHashMap.put("playerWalkLeft",
-                new MyAnimation(new Texture("characters/knight_walking_spritesheet.png"), 4, 2, walkingFrameDuration, 2, 3));
+                new MyAnimation(new Texture("characters/knight_walking_spritesheet.png"), 4, 2, frameDuration, 2, 3));
         playerAnimationHashMap.put("playerWalkUp",
-                new MyAnimation(new Texture("characters/knight_walking_spritesheet.png"), 4, 2, walkingFrameDuration, 6, 7));
+                new MyAnimation(new Texture("characters/knight_walking_spritesheet.png"), 4, 2, frameDuration, 6, 7));
         playerAnimationHashMap.put("playerWalkDown",
-                new MyAnimation(new Texture("characters/knight_walking_spritesheet.png"), 4, 2, walkingFrameDuration, 4, 5));
+                new MyAnimation(new Texture("characters/knight_walking_spritesheet.png"), 4, 2, frameDuration, 4, 5));
+       */
+		playerAnimationHashMap.put("playerWalking",
+				new MyAnimation(new Texture("characters/player/player_walking.png"), 1, 11, frameDuration, 0, 10));
+		playerAnimationHashMap.put("playerAttacking",
+				new MyAnimation(new Texture("characters/player/player_attacking.png"), 1, 11, frameDuration, 0, 10));
+		playerAnimationHashMap.put("playerAttackingIdle",
+				new MyAnimation(new Texture("characters/player/player_attacking_idle.png"), 1, 11, frameDuration, 0, 10));
     }
 
     // Create player boolean hash map
@@ -155,15 +171,19 @@ public class Player extends ZOrderableSprite {
         }
 
         // Draw attacking or walking animation
-        if(playerBooleanHashMap.get("isTouchedDown") ) {
+        if(playerBooleanHashMap.get("isTouchedDown") && isWalking()) {
             drawPlayerAttackingAnimation(spriteBatch);
-        } else if(!isWalkingAtSimultaneousOpposingDirections()){
+
+        } else if(playerBooleanHashMap.get("isTouchedDown") && !isWalking()){
+			drawPlayerIdleAttackingAnimation(spriteBatch);
+		} else if(isWalking()){
             drawPlayerWalkingAnimation(spriteBatch);
         }
 
         // If the player is not walking nor attacking, render static frame for idle stance
-        if((!playerBooleanHashMap.get("isTouchedDown") && isWalkingAtSimultaneousOpposingDirections()) || (!playerBooleanHashMap.get("isTouchedDown") && !isWalking())) {
-            playerAnimationHashMap.get(direction).draw(spriteBatch, hitbox.getX()+xOffset, hitbox.getY()+yOffset, spriteWidth, spriteHeight);
+        if((!playerBooleanHashMap.get("isTouchedDown") && !isWalking())) {
+            //playerAnimationHashMap.get(direction).draw(spriteBatch, hitbox.getX()+xOffset, hitbox.getY()+yOffset, spriteWidth, spriteHeight);
+			playerAnimationHashMap.get("playerWalking").drawStaticFrame(spriteBatch, hitbox.getX()+xOffset, hitbox.getY()+yOffset, spriteWidth, spriteHeight);
         }
 
 		if(damaged) {
@@ -173,11 +193,18 @@ public class Player extends ZOrderableSprite {
 
         hpBar.draw(spriteBatch);
 
-        // Debug draw player's hitbox sprite (a red empty rectangle)
-        hitboxSprite.draw(spriteBatch);
+        // Debug draw player's map hitbox sprite (a red empty rectangle)
+		//hitboxSprite.draw(spriteBatch);
+        //spriteBatch.draw(mapHitboxSprite, mapHitbox.getX(), mapHitbox.getY(), mapHitbox.getWidth(), mapHitbox.getHeight());
+
     }
 
+    public void drawPlayerIdleAttackingAnimation(SpriteBatch spriteBatch) {
+		playerAnimationHashMap.get("playerAttackingIdle").draw(spriteBatch, hitbox.getX()+xOffset, hitbox.getY()+yOffset, spriteWidth, spriteHeight);
+	}
+
     public void drawPlayerAttackingAnimation(SpriteBatch spriteBatch) {
+    	/*
         if(angle >= 135 && angle < 225) {
             playerAnimationHashMap.get("playerAttackLeft").draw(spriteBatch, hitbox.getX()+xOffset,
                     hitbox.getY()+yOffset, spriteWidth, spriteHeight);
@@ -191,10 +218,13 @@ public class Player extends ZOrderableSprite {
             playerAnimationHashMap.get("playerAttackDown").draw(spriteBatch, hitbox.getX()+xOffset,
                     hitbox.getY()+yOffset, spriteWidth, spriteHeight);
         }
+        */
+		playerAnimationHashMap.get("playerAttacking").draw(spriteBatch, hitbox.getX()+xOffset, hitbox.getY()+yOffset, spriteWidth, spriteHeight);
     }
 
 
     public void drawPlayerWalkingAnimation(SpriteBatch spriteBatch) {
+    	/*
         if(playerBooleanHashMap.get("playerWalkLeft")) {
             playerAnimationHashMap.get("playerWalkLeft").draw(spriteBatch, hitbox.getX()+xOffset, hitbox.getY()+yOffset, spriteWidth, spriteHeight);
             direction = "playerWalkLeft";
@@ -211,6 +241,8 @@ public class Player extends ZOrderableSprite {
             playerAnimationHashMap.get("playerWalkDown").draw(spriteBatch, hitbox.getX()+xOffset, hitbox.getY()+yOffset, spriteWidth, spriteHeight);
             direction = "playerWalkDown";
         }
+        */
+		playerAnimationHashMap.get("playerWalking").draw(spriteBatch, hitbox.getX()+xOffset, hitbox.getY()+yOffset, spriteWidth, spriteHeight);
     }
 
     // x and y are pointer touch/click coordinates
@@ -218,10 +250,10 @@ public class Player extends ZOrderableSprite {
         playerBooleanHashMap.put("isTouchedDown", true);
         pointerX = x * screenToViewportX;
         pointerY = y * screenToViewportY;
-        playerAnimationHashMap.get("playerAttackRight").setStateTime(attackingFrameDuration);
-        playerAnimationHashMap.get("playerAttackLeft").setStateTime(attackingFrameDuration);
-        playerAnimationHashMap.get("playerAttackUp").setStateTime(attackingFrameDuration);
-        playerAnimationHashMap.get("playerAttackDown").setStateTime(attackingFrameDuration);
+        //playerAnimationHashMap.get("playerAttackRight").setStateTime(attackingFrameDuration);
+        //playerAnimationHashMap.get("playerAttackLeft").setStateTime(attackingFrameDuration);
+        //playerAnimationHashMap.get("playerAttackUp").setStateTime(attackingFrameDuration);
+        //playerAnimationHashMap.get("playerAttackDown").setStateTime(attackingFrameDuration);
     }
 
     // x and y are pointer touch/click coordinates
@@ -263,6 +295,12 @@ public class Player extends ZOrderableSprite {
         updateDirectionIfShooting();
         // Attack timer will be incremented with elapsed time
         attackTimer += Gdx.graphics.getDeltaTime();
+
+        // Update game map and blocked array
+		// Get directions where there are obstacles in map
+		// 0 - left, 1 - bottom, 2 - right, 3 - top
+		blockedArray = gameMap.updateHitbox(mapHitbox, 1);
+		gameMap.updatePlayerPosition(mapHitbox);
     }
 
 	// Update particles, called on draw()
@@ -318,10 +356,6 @@ public class Player extends ZOrderableSprite {
 	public float calculateAngle() {
 		float difX = (pointerX)-(cameraCenterOffsetX) - (hitbox.getCenterX());
 		float difY = (pointerY)-(cameraCenterOffsetY) - (hitbox.getCenterY());
-
-		System.out.println(("Center: "+hitbox.getCenterX())+", "+(hitbox.getCenterY()));
-		System.out.println("Offset: "+cameraCenterOffsetX+", "+cameraCenterOffsetY);
-		System.out.println(((pointerX)-(cameraCenterOffsetX))+", "+((pointerY)-(cameraCenterOffsetY)));
 		angle = (float)(180.0 / Math.PI * Math.atan2(difY, difX));
 		if(angle < 0) {
 			return 360 + angle;
@@ -332,6 +366,7 @@ public class Player extends ZOrderableSprite {
     // Determine the direction that the player is facing while shooting
     public void updateDirectionIfShooting() {
         if(playerBooleanHashMap.get("isTouchedDown")) {
+        	/*
             if(angle >= 135 && angle < 225) {
                 direction = "playerWalkLeft";
             } else if(angle >= 315 || angle < 45) {
@@ -341,23 +376,50 @@ public class Player extends ZOrderableSprite {
             } else if(angle >= 225 && angle < 315) {
                 direction = "playerWalkDown";
             }
+            */
+        	if(angle > 270 || angle < 90) {
+				//playerAnimationHashMap.get("playerWalking").setxFlipped("right");
+				playerAnimationHashMap.get("playerAttacking").setxFlipped("right");
+				playerAnimationHashMap.get("playerAttackingIdle").setxFlipped("right");
+			} else {
+				//playerAnimationHashMap.get("playerWalking").setxFlipped("left");
+				playerAnimationHashMap.get("playerAttacking").setxFlipped("left");
+				playerAnimationHashMap.get("playerAttackingIdle").setxFlipped("left");
+
+			}
         }
     }
 
     // Update player's position according to its move speed
     public void updatePosition() {
+    	float targetX = mapHitbox.getX(), targetY = mapHitbox.getY();
         if(playerBooleanHashMap.get("playerWalkLeft")) {
-            hitbox.setX(hitbox.getX() - moveSpeed);
+        	if(!blockedArray[0]) {
+				targetX = mapHitbox.getX() - moveSpeed;
+			}
         }
         if(playerBooleanHashMap.get("playerWalkRight")) {
-            hitbox.setX(hitbox.getX() + moveSpeed);
+        	if(!blockedArray[2]) {
+				targetX = mapHitbox.getX() + moveSpeed;
+			}
         }
         if(playerBooleanHashMap.get("playerWalkUp")) {
-            hitbox.setY(hitbox.getY() + moveSpeed);
+        	if(!blockedArray[3]) {
+				targetY = mapHitbox.getY() + moveSpeed;
+			}
         }
         if(playerBooleanHashMap.get("playerWalkDown")) {
-            hitbox.setY(hitbox.getY() - moveSpeed);
+        	if(!blockedArray[1]) {
+				targetY = mapHitbox.getY() - moveSpeed;
+			}
         }
+
+		hitbox.setX(targetX);
+		mapHitbox.setX(targetX);
+		hitbox.setY(targetY);
+		mapHitbox.setY(targetY);
+
+
         // Update ZOrderableSprite inherited y value
         setX(hitbox.getX());
         setY(hitbox.getY());
@@ -367,6 +429,7 @@ public class Player extends ZOrderableSprite {
 		gettingHitParticleEffect.setPosition(hitbox.getCenterX(), hitbox.getCenterY());
         // Update player's debug hitbox sprite position
         hitboxSprite.setPosition(hitbox.getX(), hitbox.getY());
+        // Update map hitbox
     }
 
     // Verify if player is moving, true if at least one is true
@@ -389,6 +452,7 @@ public class Player extends ZOrderableSprite {
     public void updatePlayerKeydown(float keycode) {
         if((keycode == Input.Keys.A || keycode == Input.Keys.LEFT)) {
             playerBooleanHashMap.put("playerWalkLeft", true);
+            playerAnimationHashMap.get("playerWalking").setxFlipped("left");
         }
         if((keycode == Input.Keys.W || keycode == Input.Keys.UP)) {
             playerBooleanHashMap.put("playerWalkUp", true);
@@ -398,6 +462,7 @@ public class Player extends ZOrderableSprite {
         }
         if((keycode == Input.Keys.D || keycode == Input.Keys.RIGHT)) {
             playerBooleanHashMap.put("playerWalkRight", true);
+			playerAnimationHashMap.get("playerWalking").setxFlipped("right");
         }
     }
 
@@ -405,6 +470,9 @@ public class Player extends ZOrderableSprite {
     public void updatePlayerKeyup(float keycode) {
         if(keycode == Input.Keys.A || keycode == Input.Keys.LEFT) {
             playerBooleanHashMap.put("playerWalkLeft", false);
+            if(playerBooleanHashMap.get("playerWalkRight")) {
+				playerAnimationHashMap.get("playerWalking").setxFlipped("right");
+			}
         }
         if(keycode == Input.Keys.W || keycode == Input.Keys.UP) {
             playerBooleanHashMap.put("playerWalkUp", false);
@@ -414,6 +482,9 @@ public class Player extends ZOrderableSprite {
         }
         if(keycode == Input.Keys.D || keycode == Input.Keys.RIGHT) {
             playerBooleanHashMap.put("playerWalkRight", false);
+			if(playerBooleanHashMap.get("playerWalkLeft")) {
+				playerAnimationHashMap.get("playerWalking").setxFlipped("left");
+			}
         }
     }
 
@@ -474,7 +545,15 @@ public class Player extends ZOrderableSprite {
         return walkingParticleEffect;
     }
 
-    public void setWalkingParticleEffect(ParticleEffect walkingParticleEffect) {
+	public Rectangle getMapHitbox() {
+		return mapHitbox;
+	}
+
+	public void setMapHitbox(Rectangle mapHitbox) {
+		this.mapHitbox = mapHitbox;
+	}
+
+	public void setWalkingParticleEffect(ParticleEffect walkingParticleEffect) {
         this.walkingParticleEffect = walkingParticleEffect;
     }
 
@@ -494,16 +573,9 @@ public class Player extends ZOrderableSprite {
 		return walkingParticleEffectScale;
 	}
 
-	public void setWalkingParticleEffectScale(float walkingParticleEffectScale) {
-		this.walkingParticleEffectScale = walkingParticleEffectScale;
-	}
 
 	public float getGettingHitParticleEffectScale() {
 		return gettingHitParticleEffectScale;
-	}
-
-	public void setGettingHitParticleEffectScale(float gettingHitParticleEffectScale) {
-		this.gettingHitParticleEffectScale = gettingHitParticleEffectScale;
 	}
 
     public int getExperience() {
@@ -550,5 +622,44 @@ public class Player extends ZOrderableSprite {
 
 	public void setCameraCenterOffsetY(float cameraCenterOffsetY) {
 		this.cameraCenterOffsetY = cameraCenterOffsetY;
+	}
+
+	public void setWalkingParticleEffectScale(float particleEffectScale) {
+		walkingParticleEffectScale = particleEffectScale;
+		scaleParticle(walkingParticleEffect, particleEffectScale);
+	}
+
+	public void setGettingHitParticleEffectScale(float particleEffectScale) {
+		gettingHitParticleEffectScale = particleEffectScale;
+		scaleParticle(gettingHitParticleEffect, particleEffectScale);
+	}
+
+	public void scaleParticle(ParticleEffect particleEffect, float particleEffectScale) {
+		float scaling;
+
+		scaling = particleEffect.getEmitters().get(0).getXScale().getHighMax();
+		particleEffect.getEmitters().get(0).getXScale().setHigh(scaling * particleEffectScale);
+
+		scaling = particleEffect.getEmitters().get(0).getVelocity().getHighMax();
+		particleEffect.getEmitters().get(0).getVelocity().setHigh(scaling * particleEffectScale);
+
+		scaling = particleEffect.getEmitters().get(0).getVelocity().getLowMax();
+		particleEffect.getEmitters().get(0).getVelocity().setLow(scaling * particleEffectScale);
+	}
+
+	public ArrayList<Rectangle> getHitboxCollisionList() {
+		return hitboxCollisionList;
+	}
+
+	public void setHitboxCollisionList(ArrayList<Rectangle> hitboxCollisionList) {
+		this.hitboxCollisionList = hitboxCollisionList;
+	}
+
+	public GameMap getGameMap() {
+		return gameMap;
+	}
+
+	public void setGameMap(GameMap gameMap) {
+		this.gameMap = gameMap;
 	}
 }

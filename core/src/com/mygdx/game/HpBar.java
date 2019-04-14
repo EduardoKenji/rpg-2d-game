@@ -10,6 +10,7 @@ public class HpBar {
     float shieldPercentage;
     Sprite blackBar, greenBar, blueBar;
     float difWidth, halfDifWidth;
+    final float barHeight = 6;
 
     public HpBar(Rectangle position, Texture[] hpBarTextureArray) {
         this.position = position;
@@ -24,9 +25,9 @@ public class HpBar {
     }
 
     public void draw(SpriteBatch spriteBatch) {
-        spriteBatch.draw(blackBar, position.getX()-halfDifWidth, position.getY(), (position.getWidth()+difWidth), 5);
-        spriteBatch.draw(greenBar, position.getX()-halfDifWidth, position.getY(), (position.getWidth()+difWidth)*(hpPercentage), 5);
-        spriteBatch.draw(blueBar, position.getX()-halfDifWidth, position.getY(), (position.getWidth()+difWidth)*(shieldPercentage), 5);
+        spriteBatch.draw(blackBar, position.getX()-halfDifWidth, position.getY(), (position.getWidth()+difWidth), barHeight);
+        spriteBatch.draw(greenBar, position.getX()-halfDifWidth, position.getY(), (position.getWidth()+difWidth)*(hpPercentage), barHeight);
+        spriteBatch.draw(blueBar, position.getX()-halfDifWidth, position.getY(), (position.getWidth()+difWidth)*(shieldPercentage), barHeight);
     }
 
     public void updatePosition(float x, float y) {

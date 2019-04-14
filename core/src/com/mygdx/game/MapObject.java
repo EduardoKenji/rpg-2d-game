@@ -1,12 +1,18 @@
 package com.mygdx.game;
 
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 public class MapObject extends ZOrderableSprite {
     Texture objectTexture;
     Rectangle hitbox;
+    // Coordinates to draw gameMap object
     float x, y, width, height;
+    // Y coord offset, different for each object
+    float yOffset;
+    // Debug hitbox sprite
+    Sprite hitboxSprite = new Sprite(new Texture("textures/hitbox.png"));
 
     public MapObject(Texture objectTexture, float x, float y, float width, float height) {
         super(y);
@@ -18,7 +24,10 @@ public class MapObject extends ZOrderableSprite {
     }
 
     public void draw(SpriteBatch spriteBatch) {
-        spriteBatch.draw(objectTexture, x, y-20, width, height);
+        spriteBatch.draw(objectTexture, x, y+yOffset, width, height);
+        if(hitbox != null) {
+            hitboxSprite.draw(spriteBatch);
+        }
     }
 
     public Texture getObjectTexture() {
@@ -34,6 +43,8 @@ public class MapObject extends ZOrderableSprite {
     }
 
     public void setHitbox(Rectangle hitbox) {
+        hitboxSprite.setPosition(hitbox.getX(), hitbox.getY());
+        hitboxSprite.setSize(hitbox.getWidth(), hitbox.getHeight());
         this.hitbox = hitbox;
     }
 
@@ -67,5 +78,21 @@ public class MapObject extends ZOrderableSprite {
 
     public void setHeight(float height) {
         this.height = height;
+    }
+
+    public float getyOffset() {
+        return yOffset;
+    }
+
+    public void setyOffset(float yOffset) {
+        this.yOffset = yOffset;
+    }
+
+    public Sprite getHitboxSprite() {
+        return hitboxSprite;
+    }
+
+    public void setHitboxSprite(Sprite hitboxSprite) {
+        this.hitboxSprite = hitboxSprite;
     }
 }

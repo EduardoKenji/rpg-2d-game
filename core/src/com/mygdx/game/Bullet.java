@@ -82,16 +82,16 @@ public class Bullet extends ZOrderableSprite {
                 if (checkIfPointIsInsideRectangle(x1, y1, bulletHitbox) || checkIfPointIsInsideRectangle(x2, y2, bulletHitbox)) {
                     // The projectile is still active
                     if(!dead) {
-                        FloatingText damageText = new FloatingText("-"+damage, enemie.getHitbox().getCenterX(), enemie.getHitbox().getCenterY()+20);
-                        damageText.setTextColor(Color.RED);
+                        FloatingText damageText = new FloatingText(""+damage, enemie.getHitbox().getCenterX(), enemie.getHitbox().getY()+enemie.getHitbox().getHeight());
+                        damageText.setTextColor(Color.WHITE);
                         floatingTextList.add(damageText);
                         enemie.setCurrentHp(enemie.getCurrentHp() - damage);
                         enemie.gotDamaged();
                         // If enemie hp is equal or lower than 0 and the enemie is not dead yet, the enemie is dead now
                         if(enemie.currentHp <= 0 && !enemie.isDead()) {
                             enemie.setDead(true);
-                            FloatingText experienceText = new FloatingText(enemie.getExperience()+" EXP", player.getHitbox().getCenterX(), player.getHitbox().getCenterY()+20);
-                            experienceText .setTextColor(Color.GREEN);
+                            FloatingText experienceText = new FloatingText(enemie.getExperience()+" EXP", player.getHitbox().getCenterX(), player.getHitbox().getY()+player.getHitbox().getHeight());
+                            experienceText .setTextColor(Color.YELLOW);
                             floatingTextList.add(experienceText);
                         }
                         // Elimate this bullet
@@ -114,7 +114,7 @@ public class Bullet extends ZOrderableSprite {
         if (checkIfPointIsInsideRectangle(x1, y1, player.getHitbox()) || checkIfPointIsInsideRectangle(x2, y2, player.getHitbox())) {
             // The projectile is still active
             if(!dead) {
-                FloatingText damageText = new FloatingText("-"+damage, player.getHitbox().getCenterX(), player.getHitbox().getCenterY()+20);
+                FloatingText damageText = new FloatingText(""+damage, player.getHitbox().getCenterX(), player.getHitbox().getY()+player.getHitbox().getHeight());
                 damageText.setTextColor(Color.RED);
                 floatingTextList.add(damageText);
                 player.setCurrentHp(player.getCurrentHp() - damage);

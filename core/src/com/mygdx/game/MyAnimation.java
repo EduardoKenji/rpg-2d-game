@@ -13,6 +13,7 @@ public class MyAnimation {
 
     // A variable for tracking elapsed time for the animation
     float stateTime;
+    boolean xFlipped;
 
     MyAnimation(Texture texture, int rows, int columns, float frameDuration) {
         // Get sprite sheet and store in tmp
@@ -63,6 +64,11 @@ public class MyAnimation {
         spriteBatch.draw(currentFrame, x, y, width, height);
     }
 
+    void drawStaticFrame(SpriteBatch spriteBatch, float x, float y, float width, float height) {
+		TextureRegion currentFrame = animation.getKeyFrame(0, true);
+		spriteBatch.draw(currentFrame, x, y, width, height);
+	}
+
     void update() {
         // Accumulate elapsed time
         stateTime += Gdx.graphics.getDeltaTime();
@@ -78,5 +84,25 @@ public class MyAnimation {
 
     public void setStateTime(float stateTime) {
         this.stateTime = stateTime;
+    }
+
+    public boolean isxFlipped() {
+        return xFlipped;
+    }
+
+    public void setxFlipped(String direction) {
+        for(TextureRegion frame: animation.getKeyFrames()) {
+            if(direction.equals("right")) {
+				if(frame.isFlipX()) {
+					frame.flip(true, false);
+				}
+            } else if(direction.equals("left")) {
+                if(!frame.isFlipX()) {
+                    frame.flip(true, false);
+                }
+
+            }
+
+        }
     }
 }

@@ -13,7 +13,7 @@ public class FloatingText {
 	// Reference position
 	float x, y;
 	// Properties
-	final float incrementSpeed = 0.5f;
+	final float incrementSpeed = 1.8f;
 	final float maxHeightOffset = 50;
 	float maxHeight;
 	// Check if floating text should be removed from render

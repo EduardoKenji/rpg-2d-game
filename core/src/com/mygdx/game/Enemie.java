@@ -10,12 +10,17 @@ import java.util.ArrayList;
 
 public class Enemie extends ZOrderableSprite {
 
+	ArrayList hitboxCollisionList;
+
     // Hitbox for the enemie
     Rectangle hitbox;
     ArrayList<Rectangle> hitboxList;
     ArrayList<Sprite> bulletHitboxSpriteList;
     // Debug hitbox sprite
     Sprite hitboxSprite = new Sprite(new Texture("textures/hitbox.png"));
+    // Map hitbox, used to calculate collision with map objects and boundaries
+	Rectangle mapHitBox;
+	Sprite mapHitboxSprite = new Sprite(new Texture("textures/map_hitbox.png"));
 
     // Enemie stats
     float moveSpeed;
@@ -59,7 +64,7 @@ public class Enemie extends ZOrderableSprite {
     Enemie spawnedEnemie;
     // If this monster has minions
     ArrayList<Enemie> minionList;
-    // Maximum amount of minions on map
+    // Maximum amount of minions on gameMap
     int maxMinions;
     // Target player
     Player player;
@@ -74,7 +79,7 @@ public class Enemie extends ZOrderableSprite {
     boolean damaged;
 
     // Animations from sprite sheets with enemies facing left or facing right
-    MyAnimation faceLeft, faceRight;
+    MyAnimation animation;
 
     // Left or right
     String direction;
@@ -87,28 +92,33 @@ public class Enemie extends ZOrderableSprite {
     // boolean to check if enemy is moving
     boolean isMoving;
 
-    public Enemie(Rectangle hitbox, float moveSpeed, String spriteSheetPath, String projectileTexturePath, String walkingPEPath,  String gettingHitPEPath, String particleFolder, float walkingFrameDuration) {
+    // Check collision with world map
+	boolean blockedArray[];
+	GameMap gameMap;
+
+    public Enemie(Rectangle hitbox, float moveSpeed, String spriteSheetPath, String projectileTexturePath, String walkingPEPath,  String gettingHitPEPath, String particleFolder, float walkingFrameDuration, int cols) {
         super(hitbox.getY());
         // Enemie hitbox
         this.hitbox = hitbox;
         // Enemie move speed
         this.moveSpeed = moveSpeed;
 
-        // Randomize enemie initial facing direction
-        int random = (int)(Math.random()*2);
-        if(random == 0) {
-            direction = "left";
-        } else {
-            direction = "right";
-        }
-
         // Spawn coordinates for fixated enemies
         originX = hitbox.getX();
         originY = hitbox.getY();
 
         // Create enemie's animations
-        faceLeft = new MyAnimation(new Texture(spriteSheetPath), 2, 2, walkingFrameDuration, 2, 3);
-        faceRight = new MyAnimation(new Texture(spriteSheetPath), 2, 2, walkingFrameDuration, 0, 1);
+        animation = new MyAnimation(new Texture(spriteSheetPath), 1, cols, walkingFrameDuration, 0, cols-1);
+
+		// Randomize enemie initial facing direction
+		int random = (int)(Math.random()*2);
+		if(random == 0) {
+			direction = "left";
+			animation.setxFlipped(direction);
+		} else {
+			direction = "right";
+			animation.setxFlipped(direction);
+		}
 
         // Projectile texture
         projectileTexture = new Texture(projectileTexturePath);
@@ -147,25 +157,26 @@ public class Enemie extends ZOrderableSprite {
     public void draw(SpriteBatch spriteBatch) {
 
         // Draw walking particle effect if enemie is moving
-        walkingParticleEffect.scaleEffect(walkingParticleEffectScale);
         if(isMoving) {
+			//walkingParticleEffect.scaleEffect(walkingParticleEffectScale);
             walkingParticleEffect.draw(spriteBatch);
         }
 
-        // Draw animations
-        if(direction.equals("left")) {
-            faceLeft.draw(spriteBatch, hitbox.getX()+xOffset, hitbox.getY()+yOffset, spriteWidth, spriteHeight);
-        } else {
-            faceRight.draw(spriteBatch, hitbox.getX()+xOffset, hitbox.getY()+yOffset, spriteWidth, spriteHeight);
-        }
+        if(isMoving) {
+			animation.draw(spriteBatch, hitbox.getX()+xOffset, hitbox.getY()+yOffset, spriteWidth, spriteHeight);
+		} else {
+			animation.drawStaticFrame(spriteBatch, hitbox.getX()+xOffset, hitbox.getY()+yOffset, spriteWidth, spriteHeight);
+		}
+
 
         if(damaged) {
-            gettingHitParticleEffect.scaleEffect(gettingHitParticleEffectScale);
+        	//gettingHitParticleEffect.scaleEffect(gettingHitParticleEffectScale);
             gettingHitParticleEffect.draw(spriteBatch);
         }
 
         // Draw HP bar
         hpBar.draw(spriteBatch);
+
 
         /*
         // Debug draw enemie sprite hitbox
@@ -175,6 +186,8 @@ public class Enemie extends ZOrderableSprite {
         for(Sprite bulletHitbox : bulletHitboxSpriteList) {
         	bulletHitbox.draw(spriteBatch);
 		}
+
+		spriteBatch.draw(mapHitboxSprite, mapHitBox.getX(), mapHitBox.getY(), mapHitBox.getWidth(), mapHitBox.getHeight());
 		*/
     }
 
@@ -201,8 +214,7 @@ public class Enemie extends ZOrderableSprite {
         }
 
         // Update animations
-        faceLeft.update();
-        faceRight.update();
+        animation.update();
 
         // Update particles
         updateParticles();
@@ -212,6 +224,11 @@ public class Enemie extends ZOrderableSprite {
         // Update hp bar
         hpBar.update(currentHp, maximumHp, currentShield, maximumShield);
         hpBar.updatePosition(hitbox.getX(), hitbox.getY() - 7);
+
+		// Update game map and blocked array
+		// Get directions where there are obstacles in map
+		// 0 - left, 1 - bottom, 2 - right, 3 - top
+		blockedArray = gameMap.updateHitbox(mapHitBox, 1);
     }
 
     // Update particles, called on draw()
@@ -251,6 +268,7 @@ public class Enemie extends ZOrderableSprite {
             } else {
                 direction = "left";
             }
+			animation.setxFlipped(direction);
             aiTimer2 = 0f;
         }
         // Decisions and courses of action
@@ -260,11 +278,19 @@ public class Enemie extends ZOrderableSprite {
             isMoving = true;
             float offsetX = (float)(moveSpeed * Math.cos(Math.toRadians(angleToWalk)));
             float offsetY = (float)(moveSpeed * Math.sin(Math.toRadians(angleToWalk)));
-            hitbox.setX(hitbox.getX() + offsetX);
-            hitbox.setY(hitbox.getY() + offsetY);
-            for(Rectangle bulletHitbox : hitboxList) {
-            	bulletHitbox.setX(bulletHitbox.getX() + offsetX);
-            	bulletHitbox.setY(bulletHitbox.getY() + offsetY);
+            if((offsetX < 0 && !blockedArray[0]) || (offsetX > 0 && !blockedArray[2])) {
+				hitbox.setX(hitbox.getX() + offsetX);
+				for(Rectangle bulletHitbox : hitboxList) {
+					bulletHitbox.setX(bulletHitbox.getX() + offsetX);
+				}
+				mapHitBox.setX(mapHitBox.getX()+offsetX);
+			}
+			if((offsetY < 0 && !blockedArray[1]) || (offsetY > 0 && !blockedArray[3])) {
+				hitbox.setY(hitbox.getY() + offsetY);
+				for(Rectangle bulletHitbox : hitboxList) {
+					bulletHitbox.setY(bulletHitbox.getY() + offsetY);
+				}
+				mapHitBox.setY(mapHitBox.getY()+offsetY);
 			}
         }
 
@@ -276,8 +302,9 @@ public class Enemie extends ZOrderableSprite {
                 direction = "left";
             } else {
                 direction = "right";
-            }
 
+            }
+			animation.setxFlipped(direction);
             updateAttack(projectileList, zOrderableSpriteList);
 
         }
@@ -543,10 +570,6 @@ public class Enemie extends ZOrderableSprite {
         isMoving = moving;
     }
 
-    public void setWalkingParticleEffectScale(float particleEffectScale) {
-        this.walkingParticleEffectScale = particleEffectScale;
-    }
-
     public Rectangle getHitbox() {
         return hitbox;
     }
@@ -671,24 +694,12 @@ public class Enemie extends ZOrderableSprite {
         return walkingParticleEffect;
     }
 
-    public void setWalkingParticleEffect(ParticleEffect walkingParticleEffect) {
-        this.walkingParticleEffect = walkingParticleEffect;
+    public MyAnimation getAnimation() {
+        return animation;
     }
 
-    public MyAnimation getFaceLeft() {
-        return faceLeft;
-    }
-
-    public void setFaceLeft(MyAnimation faceLeft) {
-        this.faceLeft = faceLeft;
-    }
-
-    public MyAnimation getFaceRight() {
-        return faceRight;
-    }
-
-    public void setFaceRight(MyAnimation faceRight) {
-        this.faceRight = faceRight;
+    public void setAnimation(MyAnimation animation) {
+        this.animation = animation;
     }
 
     public String getDirection() {
@@ -795,19 +806,62 @@ public class Enemie extends ZOrderableSprite {
 		this.experience = experience;
 	}
 
-	public void setGettingHitParticleEffectScale(float gettingHitParticleEffectScale) {
+	public void setGettingHitParticleEffectScale(float particleEffectScale) {
+		gettingHitParticleEffectScale = particleEffectScale;
+		scaleParticle(gettingHitParticleEffect, particleEffectScale);
+    }
 
+	public void setWalkingParticleEffectScale(float particleEffectScale) {
+    	walkingParticleEffectScale = particleEffectScale;
+    	scaleParticle(walkingParticleEffect, particleEffectScale);
+	}
+
+	public void scaleParticle(ParticleEffect particleEffect, float particleEffectScale) {
 		float scaling;
 
-		scaling = gettingHitParticleEffect.getEmitters().get(0).getXScale().getHighMax();
-		gettingHitParticleEffect.getEmitters().get(0).getXScale().setHigh(scaling * gettingHitParticleEffectScale);
+		scaling = particleEffect.getEmitters().get(0).getXScale().getHighMax();
+		particleEffect.getEmitters().get(0).getXScale().setHigh(scaling * particleEffectScale);
 
-		scaling = gettingHitParticleEffect.getEmitters().get(0).getVelocity().getHighMax();
-		gettingHitParticleEffect.getEmitters().get(0).getVelocity().setHigh(scaling * gettingHitParticleEffectScale);
+		scaling = particleEffect.getEmitters().get(0).getVelocity().getHighMax();
+		particleEffect.getEmitters().get(0).getVelocity().setHigh(scaling * particleEffectScale);
 
-		scaling = gettingHitParticleEffect.getEmitters().get(0).getVelocity().getLowMax();
-		gettingHitParticleEffect.getEmitters().get(0).getVelocity().setLow(scaling * gettingHitParticleEffectScale);
+		scaling = particleEffect.getEmitters().get(0).getVelocity().getLowMax();
+		particleEffect.getEmitters().get(0).getVelocity().setLow(scaling * particleEffectScale);
+	}
 
-        this.gettingHitParticleEffectScale = gettingHitParticleEffectScale;
-    }
+	public ArrayList getHitboxCollisionList() {
+		return hitboxCollisionList;
+	}
+
+	public void setHitboxCollisionList(ArrayList hitboxCollisionList) {
+		this.hitboxCollisionList = hitboxCollisionList;
+	}
+
+	public void setWalkingParticleEffect(ParticleEffect walkingParticleEffect) {
+		this.walkingParticleEffect = walkingParticleEffect;
+	}
+
+	public boolean[] getBlockedArray() {
+		return blockedArray;
+	}
+
+	public void setBlockedArray(boolean[] blockedArray) {
+		this.blockedArray = blockedArray;
+	}
+
+	public GameMap getGameMap() {
+		return gameMap;
+	}
+
+	public void setGameMap(GameMap gameMap) {
+		this.gameMap = gameMap;
+	}
+
+	public Rectangle getMapHitBox() {
+		return mapHitBox;
+	}
+
+	public void setMapHitBox(Rectangle mapHitBox) {
+		this.mapHitBox = mapHitBox;
+	}
 }

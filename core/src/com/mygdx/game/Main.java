@@ -3,10 +3,12 @@ package com.mygdx.game;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputProcessor;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.PixmapIO;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.Sprite;
@@ -18,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 public class Main extends ApplicationAdapter implements InputProcessor {
 
@@ -28,7 +31,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 	// Camera to follow the player
 	OrthographicCamera camera;
 	// Textures
-	Texture background;
+	Texture background, ground;
 	// Class that takes care of day-time calculations
 	DayNightCycle dayNightCycle;
 	// Player
@@ -53,6 +56,8 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 	ArrayList<FloatingText> floatingTextList;
 	// Comparator used to compare the Z axis for sprites via Y coordinate comparisons
 	ZAxisComparator zAxisComparator;
+	// GameMap to check collisions and some hitboxes
+	GameMap gameMap;
 
 
 	@Override
@@ -65,8 +70,8 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		//font = createFont("dungeon_font.ttf", FONT_SIZE);
 		//font.setUseIntegerPositions(false);
 		//font.getRegion().getTexture().setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
-		font = new BitmapFont(Gdx.files.internal("mana_font.fnt"), false);
-		font.getData().setScale(0.1f, 0.1f);
+		font = new BitmapFont(Gdx.files.internal("arcade.fnt"), false);
+		font.getData().setScale(1, 1);
 
 		// Initialize light array list
 		lightArrayList = new ArrayList<Light>();
@@ -87,8 +92,8 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		// Create and configure camera
 		camera=new OrthographicCamera();
 		camera.setToOrtho(false,Gdx.graphics.getWidth(),Gdx.graphics.getHeight());
-		camera.viewportHeight = 400;
-		camera.viewportWidth = 500;
+		camera.viewportHeight = 600;
+		camera.viewportWidth = 800;
 
 		// Initialize sprite batch
 		spriteBatch=new SpriteBatch();
@@ -99,32 +104,32 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		background = new Texture("textures/background.png");
 		// Debug sprite to test depth calculation for sprites
 
-		// Debug tree to test depth
-		MapObject testTree;
+		// Create gameMap
+		gameMap = new GameMap(3, 15000, 15000, 0, 0);
 
-
-		testTree = new MapObject(new Texture("test_tree_128.png"), 300, 300, 128, 128);
-		mapObjectList.add(testTree);
-		zOrderableSpriteList.add(testTree);
-		for(int i = 0; i < 1; i++) {
-			testTree = new MapObject(new Texture("test_tree_128.png"), (float)(Math.random()*10000), (float)(Math.random()*10000), 128, 128);
-			mapObjectList.add(testTree);
-			zOrderableSpriteList.add(testTree);
-		}
+		// Fill map object list
+		fillMapObjectList();
 
         Texture hpBarsTextures[] = new Texture[3];
         hpBarsTextures[0] = new Texture("hp_bars/black_bar.png");
         hpBarsTextures[1] = new Texture("hp_bars/green_bar.png");
         hpBarsTextures[2] = new Texture("hp_bars/blue_bar.png");
 
-		player = new Player(new Rectangle(315, 212.5f, 17, 28), 2);
+		player = new Player(new Rectangle(315, 212.5f, 33, 56), 2);
 		player.setScreenToViewport(camera.viewportWidth, camera.viewportHeight);
-        HpBar hpBar = new HpBar( new Rectangle(400, 293, 17, 28), hpBarsTextures);
+		player.setGettingHitParticleEffectScale(1.3f);
+		player.setMapHitbox(new Rectangle(315, 212.5f, 33, 22));
+        HpBar hpBar = new HpBar( new Rectangle(315, 205.5f, 33, 56), hpBarsTextures);
         player.setHpBar(hpBar);
         player.setCurrentHp(40);
         player.setMaximumHp(40);
         player.setBaseDamage(20);
 		zOrderableSpriteList.add(player);
+		// Add player hitbox to the gameMap
+		gameMap.updateHitbox(player.getMapHitbox(), 0);
+		gameMap.updatePlayerPosition(player.getMapHitbox());
+		player.setGameMap(gameMap);
+
 
 		// Day night cycle starts at 12:00 A.M.
 		dayNightCycle = new DayNightCycle(12, 0);
@@ -141,7 +146,152 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		// Fill enemie list
 		fillEnemieList();
 
+		for(Enemie enemie: enemieList) {
+			enemie.setGameMap(gameMap);
+		}
+
 		Gdx.input.setInputProcessor(this);
+
+
+		/*
+		// Pixmap debug
+		Pixmap pixmap = new Pixmap(new FileHandle("textures/ground.png"));
+		System.out.println(pixmap.getWidth()+" "+pixmap.getHeight());
+		float centerX = pixmap.getWidth()/2;
+		float centerY = pixmap.getHeight()/2;
+		System.out.println(euclidianDistance(0, 0, centerX, centerY));
+		int i, j, k, l, count = 0;
+		int r, g, b, a;
+		for(i = 0; i < pixmap.getHeight(); i++) {
+			for(j = 0; j < pixmap.getWidth(); j++) {
+				Color color = new Color(pixmap.getPixel(j, i));
+				//System.out.println(color.r * (255) + " " + color.g * (255) + " " + color.b * (255) + " " + color.a * (255));
+				//count++;
+				float result = 1/euclidianDistance(j, i, centerX, centerY);
+				float variation = 20;
+				if(Math.random() < result) {
+					int result2 = (int)(Math.random() * 3);
+					if(result2 == 0) {
+						pixmap.setColor(new Color(47f/255f+(float)(Math.random())/variation- (1/variation),
+								74f/255f+(float)(Math.random())/variation- (1/variation),
+								114f/255f+(float)(Math.random())/variation- (1/variation), 1));
+					} else if (result2 == 1){
+						pixmap.setColor(new Color(0f/255f+(float)(Math.random())/variation- (1/variation),
+								127f/255f+(float)(Math.random())/variation- (1/variation),
+								70f/255f+(float)(Math.random())/variation- (1/variation), 1));
+					} else {
+						pixmap.setColor(new Color(0.5f+(float)(Math.random())/variation- (1/variation),
+								0.5f+(float)(Math.random())/variation- (1/variation),
+								0.5f+(float)(Math.random())/variation- (1/variation), 1));
+					}
+				} else {
+					pixmap.setColor(new Color(0, 0, 0, 0));
+				}
+
+				int squareSize = 2;
+				for(k = i; k < i+squareSize; k++) {
+					for(l = j; l < j+squareSize; l++) {
+						//color = new Color(pixmap.getPixel(l, k));
+						pixmap.drawPixel(l, k);
+					}
+				}
+			}
+		}
+		System.out.println(count);
+		FileHandle fh = new FileHandle("textures/new_ground.png");
+		PixmapIO.writePNG(fh, pixmap);
+		pixmap.dispose();
+		*/
+
+		ground = new Texture("textures/new_ground.png");
+	}
+
+	public static void paintWithMossAspect() {
+		// Pixmap debug
+		Pixmap pixmap = new Pixmap(new FileHandle("C:/cygwin64/home/Eduardo/rpg-2d-game/android/assets/textures/ground.png"));
+		System.out.println(pixmap.getWidth()+" "+pixmap.getHeight());
+		int i, j, k, l, count = 0;
+		int r, g, b, a;
+		for(i = 0; i < pixmap.getHeight(); i++) {
+			for(j = 0; j < pixmap.getWidth(); j++) {
+				Color color = new Color(pixmap.getPixel(j, i));
+				if(color.r* (255) == 64.0f && color.g* (255) == 64.0f &&
+						color.b* (255) == 64.0f && color.a* (255) == 255.0f) {
+					//System.out.println(color.r * (255) + " " + color.g * (255) + " " + color.b * (255) + " " + color.a * (255));
+					//count++;
+					int result = (int)(Math.random()*6);
+					float variation = 20;
+
+					if(result == 1) {
+						pixmap.setColor(new Color(0.5f+(float)(Math.random())/variation- (1/variation),
+								0.5f+(float)(Math.random())/variation- (1/variation),
+								0.5f+(float)(Math.random())/variation- (1/variation), 1));
+
+					} else if (result == 2){
+						pixmap.setColor(new Color(0f+(float)(Math.random())/variation,
+								0.5f+(float)(Math.random())/variation- (1/variation),
+								0.05f+(float)(Math.random())/variation, 1));
+					} else if (result == 3){
+						pixmap.setColor(new Color(182f/255f+(float)(Math.random())/variation - (1/variation),
+								1-(float)(Math.random())/variation,
+								0+(float)(Math.random())/variation, 1));
+					} else if (result == 4){
+						pixmap.setColor(new Color(192f/255f+(float)(Math.random())/variation - (1/variation),
+								192f/255f+(float)(Math.random())/variation- (1/variation),
+								192f/255f+(float)(Math.random())/variation- (1/variation), 1));
+					} else {
+						pixmap.setColor(0.25f, 0.25f, 0.25f, 1);
+					}
+					int squareSize = 2;
+					for(k = i; k < i+squareSize; k++) {
+						for(l = j; l < j+squareSize; l++) {
+							color = new Color(pixmap.getPixel(l, k));
+							if(color.r* (255) == 0.0f && color.g* (255) == 0.0f &&
+									color.b* (255) == 0.0f && color.a* (255) == 255f) {
+								break;
+							}
+							if(color.a*(255) < 255f) {
+								break;
+							}
+							pixmap.drawPixel(l, k);
+						}
+					}
+					//pixmap.drawPixel(j, i);
+					//pixmap.drawPixel(j, i+1);
+					//pixmap.drawPixel(j+1, i);
+					//pixmap.drawPixel(j+1, i+1);
+				}
+			}
+		}
+		System.out.println(count);
+		FileHandle fh = new FileHandle("textures/new_ground.png");
+		PixmapIO.writePNG(fh, pixmap);
+		pixmap.dispose();
+	}
+
+	public void fillMapObjectList() {
+		// Debug tree to test depth
+		MapObject pillar;
+
+		float mapObjectHitboxWidth = 17;
+		float mapObjectHitboxHeight = 24;
+
+		pillar = new MapObject(new Texture("textures/new_pillar.png"), 300, 300, 256, 256);
+		pillar.setyOffset(-38);
+		pillar.setHitbox(new Rectangle(428-mapObjectHitboxWidth/2, 300, mapObjectHitboxWidth, mapObjectHitboxHeight));
+		gameMap.updateHitbox(pillar.getHitbox(), 2);
+		mapObjectList.add(pillar);
+		zOrderableSpriteList.add(pillar);
+		for(int i = 0; i < 20; i++) {
+			float randomX = (float)(Math.random()*600);
+			float randomY = (float)(Math.random()*600);
+			pillar = new MapObject(new Texture("textures/new_pillar.png"), randomX, randomY, 256, 256);
+			pillar.setyOffset(-38);
+			pillar.setHitbox(new Rectangle(randomX+128-mapObjectHitboxWidth/2, randomY, mapObjectHitboxWidth, mapObjectHitboxHeight));
+			gameMap.updateHitbox(pillar.getHitbox(), 2);
+			mapObjectList.add(pillar);
+			zOrderableSpriteList.add(pillar);
+		}
 	}
 
 	public void fillEnemieList() {
@@ -151,9 +301,11 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		hpBarsTextures[1] = new Texture("hp_bars/green_bar.png");
 		hpBarsTextures[2] = new Texture("hp_bars/blue_bar.png");
 
+		float startY = 400;
+
 		// Small blue slime
-		Rectangle hitbox = new Rectangle(600, 200, 25, 20);
-		HpBar hpBar = new HpBar( new Rectangle(600, 193, 25, 20), hpBarsTextures);
+		Rectangle hitbox = new Rectangle(600, startY, 25, 20);
+		HpBar hpBar = new HpBar( new Rectangle(600, startY-7, 25, 20), hpBarsTextures);
 		float moveSpeed = 0.7f;
 		String spriteSheetPath = "characters/enemies/blue_slime.png";
 		String projectileTexturePath = "projectiles/blue_slime_projectile.png";
@@ -161,11 +313,12 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		String gettingHitPEPath = "particle_effects/blue_slime_blood.pe";
 		// Particles folder
 		String particlesFolder = "particle_effects";
-		float walkingFrameDuration = 0.3f;
-		Enemie enemie = new Enemie(hitbox, moveSpeed, spriteSheetPath, projectileTexturePath, walkingPEPath, gettingHitPEPath, particlesFolder, walkingFrameDuration);
-		enemie.addHitBox(600, 200, 7, 14);
-		enemie.addHitBox(607, 200, 11, 20);
-		enemie.addHitBox(618, 200, 7, 14);
+		float frameDuration = 0.3f;
+		Enemie enemie = new Enemie(hitbox, moveSpeed, spriteSheetPath, projectileTexturePath, walkingPEPath, gettingHitPEPath, particlesFolder, frameDuration, 2);
+		enemie.setMapHitBox(new Rectangle(600, startY, 25, 5));
+		enemie.addHitBox(599, startY, 8, 17);
+		enemie.addHitBox(607, startY, 11, 21);
+		enemie.addHitBox(618, startY, 8, 17);
 		// HP bar and some stats
 		enemie.setHpBar(hpBar);
 		enemie.setCurrentHp(20);
@@ -177,8 +330,8 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		enemie.setSpriteHeight(100);
 		enemie.setxOffset(-37.5f);
 		enemie.setyOffset(-8);
-		enemie.setWalkingParticleEffectScale(0.6f);
-		enemie.setGettingHitParticleEffectScale(0.6f);
+		enemie.setWalkingParticleEffectScale(0.4f);
+		enemie.setGettingHitParticleEffectScale(0.4f);
 		// AI properties
 		// 1: Hostile random walking AI: the enemie will either stay idle or walk around randomly
 		enemie.setEnemieId(1000);
@@ -188,7 +341,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		enemie.setAiTimeToAction(0.25f);
 		enemie.setAiTimeToChangeDecision(0.9f);
 		// Projectile properties
-		// 2: 3 bullets with 15 degree distance between
+		// 0: 1 simple bullet
 		enemie.setShootingPattern(0);
 		enemie.setRotateProjectile(true);
 		enemie.setAttackDelay(2f);
@@ -201,27 +354,29 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		enemieList.add(enemie);
 		zOrderableSpriteList.add(enemie);
 
-		for(int i = 0; i < 2; i++) {
-			// Mother blue slime
-			hitbox = new Rectangle(600, 200, 50, 40);
-			hpBar = new HpBar( new Rectangle(600, 193, 50, 40), hpBarsTextures);
+
+		for(int i = 0; i < 600; i++) {
+			// Medium blue slime
+			hitbox = new Rectangle(600, startY, 50, 40);
+			hpBar = new HpBar( new Rectangle(600, startY-7, 50, 40), hpBarsTextures);
 			moveSpeed = 0.7f;
 			spriteSheetPath = "characters/enemies/blue_slime.png";
 			projectileTexturePath = "projectiles/blue_slime_projectile.png";
 			walkingPEPath = "particle_effects/walking_on_dirty.pe";
 			gettingHitPEPath = "particle_effects/blue_slime_blood.pe";
 			particlesFolder = "particle_effects";
-			walkingFrameDuration = 0.3f;
-			enemie = new Enemie(hitbox, moveSpeed, spriteSheetPath, projectileTexturePath, walkingPEPath, gettingHitPEPath, particlesFolder, walkingFrameDuration);
-			enemie.addHitBox(600, 200, 14, 28);
-			enemie.addHitBox(614, 200, 22, 40);
-			enemie.addHitBox(636, 200, 14, 28);
+			frameDuration = 0.3f;
+			enemie = new Enemie(hitbox, moveSpeed, spriteSheetPath, projectileTexturePath, walkingPEPath, gettingHitPEPath, particlesFolder, frameDuration, 2);
+			enemie.setMapHitBox(new Rectangle(600, startY, 50, 10));
+			enemie.addHitBox(600, startY, 14, 28);
+			enemie.addHitBox(614, startY, 22, 40);
+			enemie.addHitBox(636, startY, 14, 28);
 			// HP bar and some stats
 			enemie.setHpBar(hpBar);
 			enemie.setCurrentHp(50);
             enemie.setMaximumHp(50);
 			enemie.setBaseDamage(3);
-			enemie.setExperience(6);
+			enemie.setExperience(3);
 			// Enemie sprite positioning
 			enemie.setSpriteWidth(200);
 			enemie.setSpriteHeight(200);
@@ -238,17 +393,122 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 			enemie.setAiTimeToAction(0.25f);
 			enemie.setAiTimeToChangeDecision(0.9f);
 			enemie.setAiTimeToSpawn(1f);
+			enemie.setMaxMinions(1);
+			enemie.setSpawnedEnemie(enemieDict.get("blueSlime"));
+			// Projectile properties
+			// 0: 1 simple bullet
+			enemie.setShootingPattern(0);
+			enemie.setAttackDelay(2f);
+			enemie.setRotateProjectile(true);
+			enemie.setProjectileWidth(24);
+			enemie.setProjectileHeight(3);
+			enemie.setProjectileLifeTime(1.2f);
+			enemie.setProjectileSpeed(1.5f);
+			enemie.setProjectileShadowTexture(projectileShadowTexture);
+			enemieList.add(enemie);
+			zOrderableSpriteList.add(enemie);
+		}
+
+		// Mother blue slime
+		hitbox = new Rectangle(600, startY, 100, 80);
+		hpBar = new HpBar( new Rectangle(600, startY-7, 100, 80), hpBarsTextures);
+		moveSpeed = 0.7f;
+		spriteSheetPath = "characters/enemies/blue_slime.png";
+		projectileTexturePath = "projectiles/blue_slime_projectile.png";
+		walkingPEPath = "particle_effects/walking_on_dirty.pe";
+		gettingHitPEPath = "particle_effects/blue_slime_blood.pe";
+		particlesFolder = "particle_effects";
+		frameDuration = 0.3f;
+		enemie = new Enemie(hitbox, moveSpeed, spriteSheetPath, projectileTexturePath, walkingPEPath, gettingHitPEPath, particlesFolder, frameDuration, 2);
+		enemie.setMapHitBox(new Rectangle(600, startY, 100, 20));
+		enemie.addHitBox(600, startY, 28, 56);
+		enemie.addHitBox(628, startY, 44, 80);
+		enemie.addHitBox(672, startY, 28, 56);
+		// HP bar and some stats
+		enemie.setHpBar(hpBar);
+		enemie.setCurrentHp(150);
+		enemie.setMaximumHp(150);
+		enemie.setBaseDamage(6);
+		enemie.setExperience(10);
+		// Enemie sprite positioning
+		enemie.setSpriteWidth(400);
+		enemie.setSpriteHeight(400);
+		enemie.setxOffset(-150);
+		enemie.setyOffset(-32);
+		enemie.setWalkingParticleEffectScale(1.7f);
+		enemie.setGettingHitParticleEffectScale(1.7f);
+		// AI properties
+		// 2: Hostile spawner random walking AI: the enemie will either stay idle or walk around randomly
+		enemie.setEnemieId(1002);
+		enemie.setAiType(1);
+		enemie.setHostileRange(250f);
+		enemie.setPlayer(player);
+		enemie.setAiTimeToAction(0.25f);
+		enemie.setAiTimeToChangeDecision(0.9f);
+		enemie.setAiTimeToSpawn(1f);
+		enemie.setMaxMinions(5);
+		enemie.setSpawnedEnemie(enemieDict.get("blueSlime"));
+		// Projectile properties
+		// 1: 3 bullets with 15 degree distance between
+		enemie.setShootingPattern(1);
+		enemie.setAttackDelay(2f);
+		enemie.setRotateProjectile(true);
+		enemie.setProjectileWidth(40);
+		enemie.setProjectileHeight(5);
+		enemie.setProjectileLifeTime(1.4f);
+		enemie.setProjectileSpeed(1.8f);
+		enemie.setProjectileShadowTexture(projectileShadowTexture);
+		enemieList.add(enemie);
+		zOrderableSpriteList.add(enemie);
+
+		for(int i = 0; i < 600; i++) {
+			// Skeleton
+			hitbox = new Rectangle(600, startY, 34, 64);
+			hpBar = new HpBar( new Rectangle(600, startY-7, 34, 64), hpBarsTextures);
+			moveSpeed = 2f;
+			spriteSheetPath = "characters/enemies/skeleton.png";
+			projectileTexturePath = "projectiles/skeleton_projectile.png";
+			walkingPEPath = "particle_effects/walking_on_dirty.pe";
+			gettingHitPEPath = "particle_effects/skeleton_blood.pe";
+			particlesFolder = "particle_effects";
+			frameDuration = 0.02f;
+			enemie = new Enemie(hitbox, moveSpeed, spriteSheetPath, projectileTexturePath, walkingPEPath, gettingHitPEPath, particlesFolder, frameDuration, 11);
+			enemie.setMapHitBox(new Rectangle(600, startY, 34, 20));
+			enemie.addHitBox(600, startY, 34, 64);
+
+			// HP bar and some stats
+			enemie.setHpBar(hpBar);
+			enemie.setCurrentHp(1000);
+			enemie.setMaximumHp(1000);
+			enemie.setBaseDamage(10);
+			enemie.setExperience(10);
+			// Enemie sprite positioning
+			enemie.setSpriteWidth(200);
+			enemie.setSpriteHeight(200);
+			enemie.setxOffset(-83);
+			enemie.setyOffset(-17);
+			enemie.setWalkingParticleEffectScale(1.7f);
+			enemie.setGettingHitParticleEffectScale(1.7f);
+			// AI properties
+			// 2: Hostile spawner random walking AI: the enemie will either stay idle or walk around randomly
+			enemie.setEnemieId(1002);
+			enemie.setAiType(1);
+			enemie.setHostileRange(250f);
+			enemie.setPlayer(player);
+			enemie.setAiTimeToAction(0.25f);
+			enemie.setAiTimeToChangeDecision(0.9f);
+			enemie.setAiTimeToSpawn(1f);
 			enemie.setMaxMinions(5);
 			enemie.setSpawnedEnemie(enemieDict.get("blueSlime"));
 			// Projectile properties
 			// 1: 3 bullets with 15 degree distance between
 			enemie.setShootingPattern(1);
-			enemie.setAttackDelay(2f);
+			enemie.setAttackDelay(1.5f);
 			enemie.setRotateProjectile(true);
-			enemie.setProjectileWidth(28);
-			enemie.setProjectileHeight(3.5f);
-			enemie.setProjectileLifeTime(1.2f);
-			enemie.setProjectileSpeed(1.5f);
+			enemie.setProjectileWidth(40);
+			enemie.setProjectileHeight(5);
+			enemie.setProjectileLifeTime(1.4f);
+			enemie.setProjectileSpeed(2.6f);
 			enemie.setProjectileShadowTexture(projectileShadowTexture);
 			enemieList.add(enemie);
 			zOrderableSpriteList.add(enemie);
@@ -372,12 +632,17 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 			camera.position.y = camera.viewportHeight/2;
 		}
 		player.updateCameraCenterOffset(camera.position.x, camera.position.y);
-
-
 		camera.update();
+
+		// Update map
+		gameMap.resetMatrix();
+		for(MapObject mapObject : mapObjectList) {
+			gameMap.updateHitbox(mapObject.getHitbox(), 2);
+		}
 
 		// Update sprites in Z order
 		Collections.sort(zOrderableSpriteList, zAxisComparator);
+
 	}
 
 	// Draw player, enemies, projectiles, npcs, map, and so forth
@@ -386,12 +651,16 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		spriteBatch.begin();
 		// Draw background
 		spriteBatch.draw(background,0,0, 10000, 10000);
+		// Draw test ground
+		spriteBatch.draw(ground, -1000, -1000, 3024, 3024);
 		// Draw all static and dynamic map objects and entities
 		for(ZOrderableSprite sprite : zOrderableSpriteList) {
-			if(euclidianDistance(sprite.getX(), sprite.getY(), player.getHitbox().getCenterX(), player.getHitbox().getCenterY()) < 600) {
+			if(euclidianDistance(sprite.getX(), sprite.getY(), player.getHitbox().getCenterX(), player.getHitbox().getCenterY()) < 850) {
 				sprite.draw(spriteBatch);
 			}
 		}
+		// Debug draw map
+		//gameMap.draw(spriteBatch, player);
 		// Draw floating texts
 		for(FloatingText floatingText : floatingTextList) {
 			floatingText.draw(spriteBatch, font);
