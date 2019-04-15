@@ -1,8 +1,12 @@
 package com.mygdx.game;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.ParticleEffect;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+
+import java.util.ArrayList;
 
 public class MapObject extends ZOrderableSprite {
     Texture objectTexture;
@@ -13,6 +17,10 @@ public class MapObject extends ZOrderableSprite {
     float yOffset;
     // Debug hitbox sprite
     Sprite hitboxSprite = new Sprite(new Texture("textures/hitbox.png"));
+    ParticleEffect particleEffect;
+    float timer;
+    float timeToResetPE;
+    Light light;
 
     public MapObject(Texture objectTexture, float x, float y, float width, float height) {
         super(y);
@@ -21,6 +29,7 @@ public class MapObject extends ZOrderableSprite {
         this.y = y;
         this.width = width;
         this.height = height;
+        timer = 0;
     }
 
     public void draw(SpriteBatch spriteBatch) {
@@ -28,7 +37,37 @@ public class MapObject extends ZOrderableSprite {
         if(hitbox != null) {
             //hitboxSprite.draw(spriteBatch);
         }
+        if(particleEffect != null) {
+            particleEffect.draw(spriteBatch);
+        }
     }
+
+    // Update particle effects
+    public void update() {
+        if(particleEffect != null) {
+        	timer += Gdx.graphics.getDeltaTime();
+            particleEffect.update(Gdx.graphics.getDeltaTime());
+            if(particleEffect.isComplete() || timer >= timeToResetPE) {
+				particleEffect.reset();
+				timer = 0;
+			}
+        }
+    }
+
+    public void createParticleEffect(String PEpath, String PEFolder, float x, float y) {
+        particleEffect = new ParticleEffect();
+        particleEffect.load(Gdx.files.internal(PEpath), Gdx.files.internal(PEFolder));
+        particleEffect.setPosition(x, y);
+        float randomOffsetToFinish = (float)(Math.random()*1500)+150;
+        timeToResetPE = (particleEffect.getEmitters().get(0).getDuration().getLowMin() - randomOffsetToFinish)/1000f;
+        System.out.println(particleEffect.getEmitters().get(0).getDuration().getLowMin());
+		System.out.println(timeToResetPE);
+    }
+
+    public void createLight(String lightTexture, ArrayList<Light> lightArrayList, float yOffset) {
+		light = new Light(new Sprite(new Texture(lightTexture)), new Rectangle(x, y+yOffset, width, height));
+		lightArrayList.add(light);
+	}
 
     public Texture getObjectTexture() {
         return objectTexture;

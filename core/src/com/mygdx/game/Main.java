@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 
 public class Main extends ApplicationAdapter implements InputProcessor {
 
@@ -98,14 +97,14 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		// Initialize sprite batch
 		spriteBatch=new SpriteBatch();
 
-		lightArrayList.add(new Light(new Sprite(new Texture("textures/fire_light.png")), new Rectangle(0, 0, 400, 400)));
-		lightArrayList.add(new Light(new Sprite(new Texture("textures/blue_light.png")), new Rectangle(600, 200, 70, 70)));
+		//lightArrayList.add(new Light(new Sprite(new Texture("textures/fire_light.png")), new Rectangle(130, 100, 400, 400)));
+		//lightArrayList.add(new Light(new Sprite(new Texture("textures/blue_light.png")), new Rectangle(600, 200, 70, 70)));
 
 		background = new Texture("textures/background.png");
 		// Debug sprite to test depth calculation for sprites
 
 		// Create gameMap
-		gameMap = new GameMap(1 , 2000, 2000, 0, 0);
+		gameMap = new GameMap(1 , 10000, 10000, 0, 0);
 
 		// Fill map object list
 		fillMapObjectList();
@@ -131,7 +130,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		player.setGameMap(gameMap);
 
 		// Day night cycle starts at 12:00 A.M.
-		dayNightCycle = new DayNightCycle(12, 0);
+		dayNightCycle = new DayNightCycle(22, 0);
 
 		// Projectile list
 		projectileList = new ArrayList<Bullet>();
@@ -180,9 +179,9 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 					int result2 = (int)(Math.random() * 3);
 					int squareSize;
 					if(euclidianDistance < 200) {
-						squareSize = (int)(Math.random()*15+15);
-					} else if(euclidianDistance >= 200 && euclidianDistance < 300) {
 						squareSize = (int)(Math.random()*10+10);
+					} else if(euclidianDistance >= 200 && euclidianDistance < 300) {
+						squareSize = (int)(Math.random()*8+8);
 					} else if(euclidianDistance >= 300 && euclidianDistance < 400) {
 						squareSize = (int)(Math.random()*6+6);
 					} else if(euclidianDistance >= 400 && euclidianDistance < 600) {
@@ -222,11 +221,13 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		*/
 
 		ground = new Texture("textures/new_ground.png");
+
+		//paintWithMossAspect("map_objects/chest_sample.png", "map_objects/moss_chest.png", 2);
 	}
 
-	public static void paintWithMossAspect() {
+	public static void paintWithMossAspect(String inputPath, String outputPath, int squareSize) {
 		// Pixmap debug
-		Pixmap pixmap = new Pixmap(new FileHandle("C:/cygwin64/home/Eduardo/rpg-2d-game/android/assets/textures/ground.png"));
+		Pixmap pixmap = new Pixmap(new FileHandle(inputPath));
 		System.out.println(pixmap.getWidth()+" "+pixmap.getHeight());
 		int i, j, k, l, count = 0;
 		int r, g, b, a;
@@ -260,7 +261,6 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 					} else {
 						pixmap.setColor(0.25f, 0.25f, 0.25f, 1);
 					}
-					int squareSize = 2;
 					for(k = i; k < i+squareSize; k++) {
 						for(l = j; l < j+squareSize; l++) {
 							color = new Color(pixmap.getPixel(l, k));
@@ -282,33 +282,53 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 			}
 		}
 		System.out.println(count);
-		FileHandle fh = new FileHandle("textures/new_ground.png");
+		FileHandle fh = new FileHandle(outputPath);
 		PixmapIO.writePNG(fh, pixmap);
 		pixmap.dispose();
 	}
 
 	public void fillMapObjectList() {
 		// Debug tree to test depth
-		MapObject pillar;
+		MapObject mapObject;
 
-		float mapObjectHitboxWidth = 17;
-		float mapObjectHitboxHeight = 24;
+		float mapObjectHitboxWidth = 54;
+		float mapObjectHitboxHeight = 14;
+		float yOffset = 3;
 
-		pillar = new MapObject(new Texture("textures/new_pillar.png"), 300, 300, 256, 256);
-		pillar.setyOffset(-38);
-		pillar.setHitbox(new Rectangle(428-mapObjectHitboxWidth/2, 300, mapObjectHitboxWidth, mapObjectHitboxHeight));
-		gameMap.updateHitbox(pillar.getHitbox(), 2);
-		mapObjectList.add(pillar);
-		zOrderableSpriteList.add(pillar);
+		// Moss chest
+		mapObject = new MapObject(new Texture("map_objects/moss_chest.png"), 300, 300, 256, 256);
+		mapObject.setyOffset(-38);
+		mapObject.setHitbox(new Rectangle(428-mapObjectHitboxWidth/2, 300+yOffset, mapObjectHitboxWidth, mapObjectHitboxHeight));
+		gameMap.updateHitbox(mapObject.getHitbox(), 2);
+		mapObjectList.add(mapObject);
+		zOrderableSpriteList.add(mapObject);
+		// Moss pillars
+		mapObjectHitboxWidth = 17;
+		mapObjectHitboxHeight = 24;
 		for(int i = 0; i < 20; i++) {
-			float randomX = (float)(Math.random()*600);
-			float randomY = (float)(Math.random()*600);
-			pillar = new MapObject(new Texture("textures/new_pillar.png"), randomX, randomY, 256, 256);
-			pillar.setyOffset(-38);
-			pillar.setHitbox(new Rectangle(randomX+128-mapObjectHitboxWidth/2, randomY, mapObjectHitboxWidth, mapObjectHitboxHeight));
-			gameMap.updateHitbox(pillar.getHitbox(), 2);
-			mapObjectList.add(pillar);
-			zOrderableSpriteList.add(pillar);
+			float randomX = (float)(Math.random()*1000);
+			float randomY = (float)(Math.random()*1000);
+			mapObject = new MapObject(new Texture("map_objects/moss_pillar.png"), randomX, randomY, 256, 256);
+			mapObject.setyOffset(-38);
+			mapObject.setHitbox(new Rectangle(randomX+128-mapObjectHitboxWidth/2, randomY, mapObjectHitboxWidth, mapObjectHitboxHeight));
+			gameMap.updateHitbox(mapObject.getHitbox(), 2);
+			mapObjectList.add(mapObject);
+			zOrderableSpriteList.add(mapObject);
+		}
+		// Torches
+		mapObjectHitboxWidth = 10;
+		mapObjectHitboxHeight = 24;
+		for(int i = 0; i < 20; i++) {
+			float randomX = (float)(Math.random()*1000);
+			float randomY = (float)(Math.random()*1000);
+			mapObject = new MapObject(new Texture("map_objects/torch.png"), randomX, randomY, 256, 256);
+			mapObject.setyOffset(-38);
+			mapObject.setHitbox(new Rectangle(randomX+128-mapObjectHitboxWidth/2, randomY, mapObjectHitboxWidth, mapObjectHitboxHeight));
+			mapObject.createParticleEffect("particle_effects/torch_fire.pe", "particle_effects", mapObject.getX()+mapObject.getWidth()/2, mapObject.getY()+63);
+			mapObject.createLight("textures/fire_light.png", lightArrayList, -64);
+			gameMap.updateHitbox(mapObject.getHitbox(), 2);
+			mapObjectList.add(mapObject);
+			zOrderableSpriteList.add(mapObject);
 		}
 	}
 
@@ -333,7 +353,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		String particlesFolder = "particle_effects";
 		float frameDuration = 0.3f;
 		Enemie enemie = new Enemie(hitbox, moveSpeed, spriteSheetPath, projectileTexturePath, walkingPEPath, gettingHitPEPath, particlesFolder, frameDuration, 2);
-		enemie.setMapHitBox(new Rectangle(600, startY, 25, 5));
+		enemie.setMapHitbox(new Rectangle(600, startY, 25, 5));
 		enemie.addHitBox(599, startY, 8, 17);
 		enemie.addHitBox(607, startY, 11, 21);
 		enemie.addHitBox(618, startY, 8, 17);
@@ -372,7 +392,6 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		enemieList.add(enemie);
 		zOrderableSpriteList.add(enemie);
 
-
 		for(int i = 0; i < 1; i++) {
 			// Medium blue slime
 			hitbox = new Rectangle(600, startY, 50, 40);
@@ -385,7 +404,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 			particlesFolder = "particle_effects";
 			frameDuration = 0.3f;
 			enemie = new Enemie(hitbox, moveSpeed, spriteSheetPath, projectileTexturePath, walkingPEPath, gettingHitPEPath, particlesFolder, frameDuration, 2);
-			enemie.setMapHitBox(new Rectangle(600, startY, 50, 10));
+			enemie.setMapHitbox(new Rectangle(600, startY, 50, 10));
 			enemie.addHitBox(600, startY, 14, 28);
 			enemie.addHitBox(614, startY, 22, 40);
 			enemie.addHitBox(636, startY, 14, 28);
@@ -427,7 +446,6 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 			zOrderableSpriteList.add(enemie);
 		}
 
-
 		// Mother blue slime
 		hitbox = new Rectangle(600, startY, 100, 80);
 		hpBar = new HpBar( new Rectangle(600, startY-7, 100, 80), hpBarsTextures);
@@ -439,7 +457,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		particlesFolder = "particle_effects";
 		frameDuration = 0.3f;
 		enemie = new Enemie(hitbox, moveSpeed, spriteSheetPath, projectileTexturePath, walkingPEPath, gettingHitPEPath, particlesFolder, frameDuration, 2);
-		enemie.setMapHitBox(new Rectangle(600, startY, 100, 20));
+		enemie.setMapHitbox(new Rectangle(600, startY, 100, 20));
 		enemie.addHitBox(600, startY, 28, 56);
 		enemie.addHitBox(628, startY, 44, 80);
 		enemie.addHitBox(672, startY, 28, 56);
@@ -480,7 +498,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		enemieList.add(enemie);
 		zOrderableSpriteList.add(enemie);
 
-		for(int i = 0; i < 700; i++) {
+		for(int i = 0; i < 5; i++) {
 			// Skeleton
 			hitbox = new Rectangle(600, startY, 34, 64);
 			hpBar = new HpBar( new Rectangle(600, startY-7, 34, 64), hpBarsTextures);
@@ -492,7 +510,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 			particlesFolder = "particle_effects";
 			frameDuration = 0.02f;
 			enemie = new Enemie(hitbox, moveSpeed, spriteSheetPath, projectileTexturePath, walkingPEPath, gettingHitPEPath, particlesFolder, frameDuration, 11);
-			enemie.setMapHitBox(new Rectangle(600, startY, 34, 20));
+			enemie.setMapHitbox(new Rectangle(600, startY, 34, 20));
 			enemie.addHitBox(600, startY, 34, 64);
 
 			// HP bar and some stats
@@ -532,7 +550,6 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 			enemieList.add(enemie);
 			zOrderableSpriteList.add(enemie);
 		}
-
 	}
 
 	// Create and return a new font
@@ -630,6 +647,11 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		// Update Day/Night cycle
 		dayNightCycle.updateTime();
 		dayNightCycle.updateRGBValues();
+		// Update map objects (update particle effects)
+		for(MapObject mapObject : mapObjectList) {
+			mapObject.update();
+		}
+
 		// Update floating texts
 		for(FloatingText floatingText : floatingTextList) {
 			floatingText.update();
@@ -643,7 +665,9 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		}
 		// Update enemies
 		for(Enemie enemie : enemieList) {
-			enemie.update(projectileList, zOrderableSpriteList);
+			if(euclidianDistance(enemie.getHitbox().getCenterX(), enemie.getHitbox().getCenterY(), player.getHitbox().getCenterX(), player.getHitbox().getCenterY()) < 1150) {
+				enemie.update(projectileList, zOrderableSpriteList);
+			}
 		}
 		// Update player
 		player.update(projectileList, zOrderableSpriteList);
@@ -683,19 +707,19 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 				sprite.draw(spriteBatch);
 			}
 		}
-		// Debug draw map
-		//gameMap.draw(spriteBatch, player);
 		// Draw floating texts
 		for(FloatingText floatingText : floatingTextList) {
 			floatingText.draw(spriteBatch, font);
 		}
+		// Debug draw map
+		//gameMap.draw(spriteBatch, player);
+
 		spriteBatch.end();
 	}
 
 	public void updateLightFrameBuffer(SpriteBatch spriteBatch) {
 		Gdx.gl.glClearColor(0.0f, 0.0f, 0.0f,1f);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-		
 		frameBuffer.begin();
 
 		Gdx.gl.glClearColor(dayNightCycle.getRgbValue(),dayNightCycle.getRgbValue(),dayNightCycle.getRgbValue(),1f);
@@ -707,6 +731,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		for(Light light : lightArrayList) {
 			light.draw(spriteBatch);
 		}
+
 		spriteBatch.end();
 		frameBuffer.end();
 	}
@@ -714,7 +739,10 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 	public void drawLight(SpriteBatch spriteBatch) {
 		spriteBatch.setBlendFunction( GL20.GL_ZERO,GL20.GL_SRC_COLOR);
 		spriteBatch.begin();
-
+		// Draw floating texts
+		for(FloatingText floatingText : floatingTextList) {
+			floatingText.draw(spriteBatch, font);
+		}
 		spriteBatch.draw(frameBuffer.getColorBufferTexture(),-1,1,2,-2);
 		spriteBatch.end();
 	}

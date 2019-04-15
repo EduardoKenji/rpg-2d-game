@@ -19,7 +19,7 @@ public class Enemie extends ZOrderableSprite {
     // Debug hitbox sprite
     Sprite hitboxSprite = new Sprite(new Texture("textures/hitbox.png"));
     // Map hitbox, used to calculate collision with map objects and boundaries
-	Rectangle mapHitBox;
+	Rectangle mapHitbox;
 	Sprite mapHitboxSprite = new Sprite(new Texture("textures/map_hitbox.png"));
 
     // Enemie stats
@@ -177,7 +177,6 @@ public class Enemie extends ZOrderableSprite {
         // Draw HP bar
         hpBar.draw(spriteBatch);
 
-
         /*
         // Debug draw enemie sprite hitbox
         hitboxSprite.draw(spriteBatch);
@@ -187,7 +186,7 @@ public class Enemie extends ZOrderableSprite {
         	bulletHitbox.draw(spriteBatch);
 		}
 
-		spriteBatch.draw(mapHitboxSprite, mapHitBox.getX(), mapHitBox.getY(), mapHitBox.getWidth(), mapHitBox.getHeight());
+		spriteBatch.draw(mapHitboxSprite, mapHitbox.getX(), mapHitbox.getY(), mapHitbox.getWidth(), mapHitbox.getHeight());
 		*/
     }
 
@@ -228,7 +227,7 @@ public class Enemie extends ZOrderableSprite {
 		// Update game map and blocked array
 		// Get directions where there are obstacles in map
 		// 0 - left, 1 - bottom, 2 - right, 3 - top
-		blockedArray = gameMap.updateHitbox(mapHitBox, 1);
+		blockedArray = gameMap.updateHitbox(mapHitbox, 1);
     }
 
     // Update particles, called on draw()
@@ -279,19 +278,15 @@ public class Enemie extends ZOrderableSprite {
             float fpsBoundMoveSpeed = moveSpeed * (Gdx.graphics.getDeltaTime() * 60);
             float offsetX = (float)(fpsBoundMoveSpeed * Math.cos(Math.toRadians(angleToWalk)));
             float offsetY = (float)(fpsBoundMoveSpeed * Math.sin(Math.toRadians(angleToWalk)));
-            if((offsetX < 0 && !blockedArray[0]) || (offsetX > 0 && !blockedArray[2])) {
-				hitbox.setX(hitbox.getX() + offsetX);
-				for(Rectangle bulletHitbox : hitboxList) {
-					bulletHitbox.setX(bulletHitbox.getX() + offsetX);
-				}
-				mapHitBox.setX(mapHitBox.getX()+offsetX);
+            if(offsetX < 0) {
+            	updateMovementStepByStep(0, offsetX);
+			} else if(offsetX > 0) {
+				updateMovementStepByStep(2, offsetX);
 			}
-			if((offsetY < 0 && !blockedArray[1]) || (offsetY > 0 && !blockedArray[3])) {
-				hitbox.setY(hitbox.getY() + offsetY);
-				for(Rectangle bulletHitbox : hitboxList) {
-					bulletHitbox.setY(bulletHitbox.getY() + offsetY);
-				}
-				mapHitBox.setY(mapHitBox.getY()+offsetY);
+			if(offsetY < 0) {
+				updateMovementStepByStep(1, offsetY);
+			} else if(offsetY > 0) {
+				updateMovementStepByStep(3, offsetY);
 			}
         }
 
@@ -303,13 +298,56 @@ public class Enemie extends ZOrderableSprite {
                 direction = "left";
             } else {
                 direction = "right";
-
             }
 			animation.setxFlipped(direction);
             updateAttack(projectileList, zOrderableSpriteList);
 
         }
     }
+
+    int i;
+
+	// Update game map and blocked array
+	// Get directions where there are obstacles in map
+	// 0 - left, 1 - bottom, 2 - right, 3 - top
+	public void updateMovementStepByStep(int direction, float fpsBoundMoveSpeed) {
+		if(fpsBoundMoveSpeed < 0) fpsBoundMoveSpeed *= -1;
+		float targetX = mapHitbox.getX(), targetY = mapHitbox.getY();
+		float increment;
+		if(!blockedArray[direction]) {
+			for(i = 0; i < Math.ceil(fpsBoundMoveSpeed); i++) {
+				// Update game map and blocked array
+				// Get directions where there are obstacles in map
+				// 0 - left, 1 - bottom, 2 - right, 3 - top
+				blockedArray = gameMap.updateHitbox(mapHitbox, 1);
+				if(blockedArray[direction]) break;
+				gameMap.updatePlayerPosition(mapHitbox);
+				if(i != Math.ceil(fpsBoundMoveSpeed) - 1) {
+					increment = 1;
+				} else {
+					increment = 1 - (float)(Math.ceil(fpsBoundMoveSpeed) - fpsBoundMoveSpeed);
+				}
+				if(direction == 0 || direction == 1) {
+					increment *= -1;
+				}
+				if(direction == 0  || direction == 2) {
+					targetX += increment;
+					hitbox.setX(targetX);
+					mapHitbox.setX(targetX);
+					for(Rectangle bulletHitbox : hitboxList) {
+						bulletHitbox.setX(bulletHitbox.getX() + increment);
+					}
+				} else {
+					targetY += increment;
+					hitbox.setY(targetY);
+					mapHitbox.setY(targetY);
+					for(Rectangle bulletHitbox : hitboxList) {
+						bulletHitbox.setY(bulletHitbox.getY() + increment);
+					}
+				}
+			}
+		}
+	}
 
     public void updateAttack(ArrayList<Bullet> projectileList, ArrayList<ZOrderableSprite> zOrderableSpriteList) {
         if(attackTimer > attackDelay) {
@@ -858,11 +896,11 @@ public class Enemie extends ZOrderableSprite {
 		this.gameMap = gameMap;
 	}
 
-	public Rectangle getMapHitBox() {
-		return mapHitBox;
+	public Rectangle getMapHitbox() {
+		return mapHitbox;
 	}
 
-	public void setMapHitBox(Rectangle mapHitBox) {
-		this.mapHitBox = mapHitBox;
+	public void setMapHitbox(Rectangle mapHitbox) {
+		this.mapHitbox = mapHitbox;
 	}
 }
