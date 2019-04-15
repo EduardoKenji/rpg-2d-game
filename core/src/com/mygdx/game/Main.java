@@ -130,7 +130,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		player.setGameMap(gameMap);
 
 		// Day night cycle starts at 12:00 A.M.
-		dayNightCycle = new DayNightCycle(22, 0);
+		dayNightCycle = new DayNightCycle(19, 0);
 
 		// Projectile list
 		projectileList = new ArrayList<Bullet>();
@@ -600,6 +600,9 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		// Draw lights
 		drawLight(spriteBatch);
 
+		// Draw after framebuffer, so it does not get affected by illumination
+		drawFloatingTexts(spriteBatch);
+
 		// Remove projectiles
 		removeObjects();
 	}
@@ -707,13 +710,8 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 				sprite.draw(spriteBatch);
 			}
 		}
-		// Draw floating texts
-		for(FloatingText floatingText : floatingTextList) {
-			floatingText.draw(spriteBatch, font);
-		}
 		// Debug draw map
 		//gameMap.draw(spriteBatch, player);
-
 		spriteBatch.end();
 	}
 
@@ -726,6 +724,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
 		spriteBatch.setBlendFunction(GL20.GL_ONE,GL20.GL_ONE);
+
 		spriteBatch.setProjectionMatrix(camera.combined);
 		spriteBatch.begin();
 		for(Light light : lightArrayList) {
@@ -739,11 +738,21 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 	public void drawLight(SpriteBatch spriteBatch) {
 		spriteBatch.setBlendFunction( GL20.GL_ZERO,GL20.GL_SRC_COLOR);
 		spriteBatch.begin();
+		spriteBatch.draw(frameBuffer.getColorBufferTexture(),-1,1,2,-2);
+		spriteBatch.end();
+
+
+	}
+
+	// Draw after framebuffer, so it does not get affected by illumination
+	public void drawFloatingTexts(SpriteBatch spriteBatch) {
+		spriteBatch.setBlendFunction(GL20.GL_SRC_ALPHA,GL20.GL_ONE_MINUS_SRC_ALPHA);
+		spriteBatch.setProjectionMatrix(camera.combined);
+		spriteBatch.begin();
 		// Draw floating texts
 		for(FloatingText floatingText : floatingTextList) {
 			floatingText.draw(spriteBatch, font);
 		}
-		spriteBatch.draw(frameBuffer.getColorBufferTexture(),-1,1,2,-2);
 		spriteBatch.end();
 	}
 
