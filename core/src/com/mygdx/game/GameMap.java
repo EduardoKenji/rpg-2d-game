@@ -32,7 +32,7 @@ public class GameMap {
 
 		for(i = 0; i < rows; i++) {
 			for(j = 0; j < columns; j++) {
-				if(euclidianDistance(originX +(j*squareSize), originY +(i*squareSize), player.getHitbox().getCenterX(), player.getHitbox().getCenterY()) < 100) {
+				if(euclidianDistance(originX +(j*squareSize), originY +(i*squareSize), player.getHitbox().getCenterX(), player.getHitbox().getCenterY()) < 60) {
 					if(map[i][j] == 0) {
 						spriteBatch.draw(mapSquare, originX +(j*squareSize), originY +(i*squareSize), squareSize, squareSize);
 					} else {
@@ -100,7 +100,7 @@ public class GameMap {
 		if((startX-1) == -1) {
 			return true;
 		}
-		for(i = startY; i <= endY; i++) {
+		for(i = startY; i < endY; i++) {
 			if(map[i][(startX-1)] == 2) {
 				return true;
 			}
@@ -112,7 +112,7 @@ public class GameMap {
 		if((endX+1) == columns) {
 			return true;
 		}
-		for(i = startY; i <= endY; i++) {
+		for(i = startY; i < endY; i++) {
 			if(map[i][(endX+1)] == 2) {
 				return true;
 			}
@@ -124,7 +124,7 @@ public class GameMap {
 		if((endY+1) == rows) {
 			return true;
 		}
-		for(i = startX; i <= endX; i++) {
+		for(i = startX; i < endX; i++) {
 			if(map[endY+1][i] == 2) {
 				return true;
 			}
@@ -136,7 +136,7 @@ public class GameMap {
 		if((startY-1) == -1) {
 			return true;
 		}
-		for(i = startX; i <= endX; i++) {
+		for(i = startX; i < endX; i++) {
 			if(map[startY-1][i] == 2) {
 				return true;
 			}

@@ -26,7 +26,7 @@ public class MapObject extends ZOrderableSprite {
     public void draw(SpriteBatch spriteBatch) {
         spriteBatch.draw(objectTexture, x, y+yOffset, width, height);
         if(hitbox != null) {
-            hitboxSprite.draw(spriteBatch);
+            //hitboxSprite.draw(spriteBatch);
         }
     }
 

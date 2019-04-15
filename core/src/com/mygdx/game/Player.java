@@ -117,8 +117,6 @@ public class Player extends ZOrderableSprite {
 		damaged = false;
 		walkingParticleEffectScale = 0.7f;
 		gettingHitParticleEffectScale = 0.25f;
-
-		// Camera
     }
 
     // Create player boolean animation map
@@ -254,6 +252,7 @@ public class Player extends ZOrderableSprite {
         //playerAnimationHashMap.get("playerAttackLeft").setStateTime(attackingFrameDuration);
         //playerAnimationHashMap.get("playerAttackUp").setStateTime(attackingFrameDuration);
         //playerAnimationHashMap.get("playerAttackDown").setStateTime(attackingFrameDuration);
+		System.out.println(pointerX+", "+pointerY);
     }
 
     // x and y are pointer touch/click coordinates
@@ -295,12 +294,6 @@ public class Player extends ZOrderableSprite {
         updateDirectionIfShooting();
         // Attack timer will be incremented with elapsed time
         attackTimer += Gdx.graphics.getDeltaTime();
-
-        // Update game map and blocked array
-		// Get directions where there are obstacles in map
-		// 0 - left, 1 - bottom, 2 - right, 3 - top
-		blockedArray = gameMap.updateHitbox(mapHitbox, 1);
-		gameMap.updatePlayerPosition(mapHitbox);
     }
 
 	// Update particles, called on draw()
@@ -390,27 +383,57 @@ public class Player extends ZOrderableSprite {
         }
     }
 
+    int i;
+
     // Update player's position according to its move speed
     public void updatePosition() {
     	float targetX = mapHitbox.getX(), targetY = mapHitbox.getY();
         if(playerBooleanHashMap.get("playerWalkLeft")) {
         	if(!blockedArray[0]) {
-				targetX = mapHitbox.getX() - moveSpeed;
+        		for(i = 0; i < Math.ceil(moveSpeed); i++) {
+					// Update game map and blocked array
+					// Get directions where there are obstacles in map
+					// 0 - left, 1 - bottom, 2 - right, 3 - top
+					blockedArray = gameMap.updateHitbox(mapHitbox, 1);
+					gameMap.updatePlayerPosition(mapHitbox);
+					targetX = mapHitbox.getX() - 1;
+				}
 			}
         }
         if(playerBooleanHashMap.get("playerWalkRight")) {
-        	if(!blockedArray[2]) {
-				targetX = mapHitbox.getX() + moveSpeed;
+			if(!blockedArray[2]) {
+				for(i = 0; i < Math.ceil(moveSpeed); i++) {
+					// Update game map and blocked array
+					// Get directions where there are obstacles in map
+					// 0 - left, 1 - bottom, 2 - right, 3 - top
+					blockedArray = gameMap.updateHitbox(mapHitbox, 1);
+					gameMap.updatePlayerPosition(mapHitbox);
+					targetX = mapHitbox.getX() + 1;
+				}
 			}
         }
         if(playerBooleanHashMap.get("playerWalkUp")) {
-        	if(!blockedArray[3]) {
-				targetY = mapHitbox.getY() + moveSpeed;
+			if(!blockedArray[3]) {
+				for(i = 0; i < Math.ceil(moveSpeed); i++) {
+					// Update game map and blocked array
+					// Get directions where there are obstacles in map
+					// 0 - left, 1 - bottom, 2 - right, 3 - top
+					blockedArray = gameMap.updateHitbox(mapHitbox, 1);
+					gameMap.updatePlayerPosition(mapHitbox);
+					targetY = mapHitbox.getY() + 1;
+				}
 			}
         }
         if(playerBooleanHashMap.get("playerWalkDown")) {
-        	if(!blockedArray[1]) {
-				targetY = mapHitbox.getY() - moveSpeed;
+			if(!blockedArray[1]) {
+				for(i = 0; i < Math.ceil(moveSpeed); i++) {
+					// Update game map and blocked array
+					// Get directions where there are obstacles in map
+					// 0 - left, 1 - bottom, 2 - right, 3 - top
+					blockedArray = gameMap.updateHitbox(mapHitbox, 1);
+					gameMap.updatePlayerPosition(mapHitbox);
+					targetY = mapHitbox.getY() - 1;
+				}
 			}
         }
 
@@ -550,8 +573,8 @@ public class Player extends ZOrderableSprite {
 	}
 
 	public void setMapHitbox(Rectangle mapHitbox) {
-		this.mapHitbox = mapHitbox;
-	}
+    	this.mapHitbox = mapHitbox;
+    }
 
 	public void setWalkingParticleEffect(ParticleEffect walkingParticleEffect) {
         this.walkingParticleEffect = walkingParticleEffect;
@@ -660,6 +683,8 @@ public class Player extends ZOrderableSprite {
 	}
 
 	public void setGameMap(GameMap gameMap) {
-		this.gameMap = gameMap;
+    	this.gameMap = gameMap;
+		blockedArray = gameMap.updateHitbox(mapHitbox, 1);
+		gameMap.updatePlayerPosition(mapHitbox);
 	}
 }

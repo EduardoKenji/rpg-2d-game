@@ -105,7 +105,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		// Debug sprite to test depth calculation for sprites
 
 		// Create gameMap
-		gameMap = new GameMap(3, 15000, 15000, 0, 0);
+		gameMap = new GameMap(1 , 2000, 2000, 0, 0);
 
 		// Fill map object list
 		fillMapObjectList();
@@ -115,7 +115,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
         hpBarsTextures[1] = new Texture("hp_bars/green_bar.png");
         hpBarsTextures[2] = new Texture("hp_bars/blue_bar.png");
 
-		player = new Player(new Rectangle(315, 212.5f, 33, 56), 2);
+		player = new Player(new Rectangle(315, 212.5f, 33, 56), 5);
 		player.setScreenToViewport(camera.viewportWidth, camera.viewportHeight);
 		player.setGettingHitParticleEffectScale(1.3f);
 		player.setMapHitbox(new Rectangle(315, 212.5f, 33, 22));
@@ -126,8 +126,8 @@ public class Main extends ApplicationAdapter implements InputProcessor {
         player.setBaseDamage(20);
 		zOrderableSpriteList.add(player);
 		// Add player hitbox to the gameMap
-		gameMap.updateHitbox(player.getMapHitbox(), 0);
-		gameMap.updatePlayerPosition(player.getMapHitbox());
+		//gameMap.updateHitbox(player.getMapHitbox(), 1);
+		//gameMap.updatePlayerPosition(player.getMapHitbox());
 		player.setGameMap(gameMap);
 
 
@@ -152,56 +152,72 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 
 		Gdx.input.setInputProcessor(this);
 
-
-		/*
 		// Pixmap debug
 		Pixmap pixmap = new Pixmap(new FileHandle("textures/ground.png"));
-		System.out.println(pixmap.getWidth()+" "+pixmap.getHeight());
+		System.out.println("Image resolution: "+pixmap.getWidth()+" "+pixmap.getHeight());
 		float centerX = pixmap.getWidth()/2;
 		float centerY = pixmap.getHeight()/2;
-		System.out.println(euclidianDistance(0, 0, centerX, centerY));
 		int i, j, k, l, count = 0;
 		int r, g, b, a;
+		float maxDistance = Integer.MIN_VALUE;
+		float minDistance = Integer.MAX_VALUE;
 		for(i = 0; i < pixmap.getHeight(); i++) {
 			for(j = 0; j < pixmap.getWidth(); j++) {
 				Color color = new Color(pixmap.getPixel(j, i));
 				//System.out.println(color.r * (255) + " " + color.g * (255) + " " + color.b * (255) + " " + color.a * (255));
 				//count++;
-				float result = 1/euclidianDistance(j, i, centerX, centerY);
+				float euclidianDistance = euclidianDistance(j, i, centerX, centerY);
+				float result;
+				if(euclidianDistance == 0) {
+					result = 1;
+				} else {
+					result = 1/euclidianDistance;
+				}
+				if(result > maxDistance) maxDistance = result;
+				if(result < minDistance) minDistance = result;
 				float variation = 20;
 				if(Math.random() < result) {
 					int result2 = (int)(Math.random() * 3);
-					if(result2 == 0) {
-						pixmap.setColor(new Color(47f/255f+(float)(Math.random())/variation- (1/variation),
-								74f/255f+(float)(Math.random())/variation- (1/variation),
-								114f/255f+(float)(Math.random())/variation- (1/variation), 1));
-					} else if (result2 == 1){
-						pixmap.setColor(new Color(0f/255f+(float)(Math.random())/variation- (1/variation),
-								127f/255f+(float)(Math.random())/variation- (1/variation),
-								70f/255f+(float)(Math.random())/variation- (1/variation), 1));
+					int squareSize;
+					if(euclidianDistance < 200) {
+						squareSize = (int)(Math.random()*20+20);
+					} else if(euclidianDistance >= 200 && euclidianDistance < 400) {
+						squareSize = (int)(Math.random()*6+4);
+					} else if(euclidianDistance >= 400 && euclidianDistance < 600) {
+						squareSize = (int)(Math.random()*5+2);
 					} else {
-						pixmap.setColor(new Color(0.5f+(float)(Math.random())/variation- (1/variation),
-								0.5f+(float)(Math.random())/variation- (1/variation),
-								0.5f+(float)(Math.random())/variation- (1/variation), 1));
+						squareSize = (int)(Math.random()*5);
+					}
+
+					for(k = i; k < i+squareSize; k++) {
+						for(l = j; l < j+squareSize; l++) {
+							if(result2 == 0 || euclidianDistance < 200) {
+								pixmap.setColor(new Color(47f/255f+(float)(Math.random())/variation- (1/variation),
+										74f/255f+(float)(Math.random())/variation- (1/variation),
+										114f/255f+(float)(Math.random())/variation- (1/variation), 1));
+							} else if (result2 == 1){
+								pixmap.setColor(new Color(0f/255f+(float)(Math.random())/variation- (1/variation),
+										127f/255f+(float)(Math.random())/variation- (1/variation),
+										70f/255f+(float)(Math.random())/variation- (1/variation), 1));
+							} else {
+								pixmap.setColor(new Color(0.5f+(float)(Math.random())/variation- (1/variation),
+										0.5f+(float)(Math.random())/variation- (1/variation),
+										0.5f+(float)(Math.random())/variation- (1/variation), 1));
+							}
+							//color = new Color(pixmap.getPixel(l, k));
+							pixmap.drawPixel(l, k);
+						}
 					}
 				} else {
 					pixmap.setColor(new Color(0, 0, 0, 0));
 				}
-
-				int squareSize = 2;
-				for(k = i; k < i+squareSize; k++) {
-					for(l = j; l < j+squareSize; l++) {
-						//color = new Color(pixmap.getPixel(l, k));
-						pixmap.drawPixel(l, k);
-					}
-				}
 			}
 		}
-		System.out.println(count);
+		System.out.println("Min: "+minDistance+", max: "+maxDistance);
 		FileHandle fh = new FileHandle("textures/new_ground.png");
 		PixmapIO.writePNG(fh, pixmap);
 		pixmap.dispose();
-		*/
+
 
 		ground = new Texture("textures/new_ground.png");
 	}
@@ -355,7 +371,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		zOrderableSpriteList.add(enemie);
 
 
-		for(int i = 0; i < 600; i++) {
+		for(int i = 0; i < 2; i++) {
 			// Medium blue slime
 			hitbox = new Rectangle(600, startY, 50, 40);
 			hpBar = new HpBar( new Rectangle(600, startY-7, 50, 40), hpBarsTextures);
@@ -461,7 +477,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		enemieList.add(enemie);
 		zOrderableSpriteList.add(enemie);
 
-		for(int i = 0; i < 600; i++) {
+		for(int i = 0; i < 2; i++) {
 			// Skeleton
 			hitbox = new Rectangle(600, startY, 34, 64);
 			hpBar = new HpBar( new Rectangle(600, startY-7, 34, 64), hpBarsTextures);
@@ -536,6 +552,11 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		colorHashMapInstance.put("BLUE", new Color(0, 0, 1, 1));
 		colorHashMapInstance.put("GREEN", new Color(0, 1, 0, 1));
 		return colorHashMapInstance;
+	}
+
+	@Override
+	public void resize(int width, int height) {
+		player.setScreenToViewport(camera.viewportWidth, camera.viewportHeight);
 	}
 
 	@Override
@@ -652,7 +673,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		// Draw background
 		spriteBatch.draw(background,0,0, 10000, 10000);
 		// Draw test ground
-		spriteBatch.draw(ground, -1000, -1000, 3024, 3024);
+		spriteBatch.draw(ground, 0, 0, 1024, 1024);
 		// Draw all static and dynamic map objects and entities
 		for(ZOrderableSprite sprite : zOrderableSpriteList) {
 			if(euclidianDistance(sprite.getX(), sprite.getY(), player.getHitbox().getCenterX(), player.getHitbox().getCenterY()) < 850) {
