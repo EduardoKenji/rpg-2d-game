@@ -252,7 +252,6 @@ public class Player extends ZOrderableSprite {
         //playerAnimationHashMap.get("playerAttackLeft").setStateTime(attackingFrameDuration);
         //playerAnimationHashMap.get("playerAttackUp").setStateTime(attackingFrameDuration);
         //playerAnimationHashMap.get("playerAttackDown").setStateTime(attackingFrameDuration);
-		System.out.println(pointerX+", "+pointerY);
     }
 
     // x and y are pointer touch/click coordinates
@@ -388,60 +387,89 @@ public class Player extends ZOrderableSprite {
     // Update player's position according to its move speed
     public void updatePosition() {
     	float targetX = mapHitbox.getX(), targetY = mapHitbox.getY();
+		float fpsBoundMoveSpeed = moveSpeed * (Gdx.graphics.getDeltaTime() * 60);
+		float increment;
+		//System.out.println((float)Gdx.graphics.getFramesPerSecond()+" "+fpsBoundMoveSpeed/(60/(float)Gdx.graphics.getFramesPerSecond()));
         if(playerBooleanHashMap.get("playerWalkLeft")) {
         	if(!blockedArray[0]) {
-        		for(i = 0; i < Math.ceil(moveSpeed); i++) {
+        		for(i = 0; i < Math.ceil(fpsBoundMoveSpeed); i++) {
 					// Update game map and blocked array
 					// Get directions where there are obstacles in map
 					// 0 - left, 1 - bottom, 2 - right, 3 - top
 					blockedArray = gameMap.updateHitbox(mapHitbox, 1);
+					if(blockedArray[0]) break;
 					gameMap.updatePlayerPosition(mapHitbox);
-					targetX = mapHitbox.getX() - 1;
+					if(i != Math.ceil(fpsBoundMoveSpeed) - 1) {
+						increment = 1;
+					} else {
+						increment =  1 - (float)(Math.ceil(fpsBoundMoveSpeed) - fpsBoundMoveSpeed);
+					}
+					targetX -= increment;
+					hitbox.setX(targetX);
+					mapHitbox.setX(targetX);
 				}
 			}
         }
         if(playerBooleanHashMap.get("playerWalkRight")) {
 			if(!blockedArray[2]) {
-				for(i = 0; i < Math.ceil(moveSpeed); i++) {
+				for(i = 0; i < Math.ceil(fpsBoundMoveSpeed); i++) {
 					// Update game map and blocked array
 					// Get directions where there are obstacles in map
 					// 0 - left, 1 - bottom, 2 - right, 3 - top
 					blockedArray = gameMap.updateHitbox(mapHitbox, 1);
+					if(blockedArray[2]) break;
 					gameMap.updatePlayerPosition(mapHitbox);
-					targetX = mapHitbox.getX() + 1;
+					if(i != Math.ceil(fpsBoundMoveSpeed) - 1) {
+						increment = 1;
+					} else {
+						increment =  1 - (float)(Math.ceil(fpsBoundMoveSpeed) - fpsBoundMoveSpeed);
+					}
+					targetX += increment;
+					hitbox.setX(targetX);
+					mapHitbox.setX(targetX);
 				}
 			}
         }
         if(playerBooleanHashMap.get("playerWalkUp")) {
 			if(!blockedArray[3]) {
-				for(i = 0; i < Math.ceil(moveSpeed); i++) {
+				for(i = 0; i < Math.ceil(fpsBoundMoveSpeed); i++) {
 					// Update game map and blocked array
 					// Get directions where there are obstacles in map
 					// 0 - left, 1 - bottom, 2 - right, 3 - top
 					blockedArray = gameMap.updateHitbox(mapHitbox, 1);
+					if(blockedArray[3]) break;
 					gameMap.updatePlayerPosition(mapHitbox);
-					targetY = mapHitbox.getY() + 1;
+					if(i != Math.ceil(fpsBoundMoveSpeed) - 1) {
+						increment = 1;
+					} else {
+						increment =  1 - (float)(Math.ceil(fpsBoundMoveSpeed) - fpsBoundMoveSpeed);
+					}
+					targetY += increment;
+					hitbox.setY(targetY);
+					mapHitbox.setY(targetY);
 				}
 			}
         }
         if(playerBooleanHashMap.get("playerWalkDown")) {
 			if(!blockedArray[1]) {
-				for(i = 0; i < Math.ceil(moveSpeed); i++) {
+				for(i = 0; i < Math.ceil(fpsBoundMoveSpeed); i++) {
 					// Update game map and blocked array
 					// Get directions where there are obstacles in map
 					// 0 - left, 1 - bottom, 2 - right, 3 - top
 					blockedArray = gameMap.updateHitbox(mapHitbox, 1);
+					if(blockedArray[1]) break;
 					gameMap.updatePlayerPosition(mapHitbox);
-					targetY = mapHitbox.getY() - 1;
+					if(i != Math.ceil(fpsBoundMoveSpeed) - 1) {
+						increment = 1;
+					} else {
+						increment = 1 - (float)(Math.ceil(fpsBoundMoveSpeed) - fpsBoundMoveSpeed);
+					}
+					targetY -= increment;
+					hitbox.setY(targetY);
+					mapHitbox.setY(targetY);
 				}
 			}
         }
-
-		hitbox.setX(targetX);
-		mapHitbox.setX(targetX);
-		hitbox.setY(targetY);
-		mapHitbox.setY(targetY);
-
 
         // Update ZOrderableSprite inherited y value
         setX(hitbox.getX());

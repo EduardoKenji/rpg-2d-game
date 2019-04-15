@@ -276,8 +276,9 @@ public class Enemie extends ZOrderableSprite {
             isMoving = false;
         } else if(currentDecision >= 1) {
             isMoving = true;
-            float offsetX = (float)(moveSpeed * Math.cos(Math.toRadians(angleToWalk)));
-            float offsetY = (float)(moveSpeed * Math.sin(Math.toRadians(angleToWalk)));
+            float fpsBoundMoveSpeed = moveSpeed * (Gdx.graphics.getDeltaTime() * 60);
+            float offsetX = (float)(fpsBoundMoveSpeed * Math.cos(Math.toRadians(angleToWalk)));
+            float offsetY = (float)(fpsBoundMoveSpeed * Math.sin(Math.toRadians(angleToWalk)));
             if((offsetX < 0 && !blockedArray[0]) || (offsetX > 0 && !blockedArray[2])) {
 				hitbox.setX(hitbox.getX() + offsetX);
 				for(Rectangle bulletHitbox : hitboxList) {

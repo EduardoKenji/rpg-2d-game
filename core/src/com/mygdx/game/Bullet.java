@@ -46,8 +46,10 @@ public class Bullet extends ZOrderableSprite {
     }
 
     void update() {
-        centerX += (float)(speed * Math.cos(Math.toRadians(angle)));
-        centerY += (float)(speed * Math.sin(Math.toRadians(angle)));
+
+        float fpsBoundMoveSpeed = speed * (Gdx.graphics.getDeltaTime() * 60);
+        centerX += (float)(fpsBoundMoveSpeed * Math.cos(Math.toRadians(angle)));
+        centerY += (float)(fpsBoundMoveSpeed * Math.sin(Math.toRadians(angle)));
         setX(centerX);
         setY(centerY);
         bulletSprite.setCenter(centerX, centerY);

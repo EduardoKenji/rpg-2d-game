@@ -1,5 +1,6 @@
 package com.mygdx.game;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
@@ -44,7 +45,8 @@ public class FloatingText {
 	}
 
 	public void update() {
-		y += incrementSpeed;
+		float fpsIncrementSpeed = incrementSpeed * (Gdx.graphics.getDeltaTime() * 60);
+		y += fpsIncrementSpeed;
 		if(y > maxHeight) {
 			dead = true;
 		}

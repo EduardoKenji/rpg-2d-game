@@ -70,7 +70,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		//font = createFont("dungeon_font.ttf", FONT_SIZE);
 		//font.setUseIntegerPositions(false);
 		//font.getRegion().getTexture().setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
-		font = new BitmapFont(Gdx.files.internal("arcade.fnt"), false);
+		font = new BitmapFont(Gdx.files.internal("fonts/arcade.fnt"), false);
 		font.getData().setScale(1, 1);
 
 		// Initialize light array list
@@ -130,7 +130,6 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		//gameMap.updatePlayerPosition(player.getMapHitbox());
 		player.setGameMap(gameMap);
 
-
 		// Day night cycle starts at 12:00 A.M.
 		dayNightCycle = new DayNightCycle(12, 0);
 
@@ -152,6 +151,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 
 		Gdx.input.setInputProcessor(this);
 
+		/*
 		// Pixmap debug
 		Pixmap pixmap = new Pixmap(new FileHandle("textures/ground.png"));
 		System.out.println("Image resolution: "+pixmap.getWidth()+" "+pixmap.getHeight());
@@ -180,9 +180,11 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 					int result2 = (int)(Math.random() * 3);
 					int squareSize;
 					if(euclidianDistance < 200) {
-						squareSize = (int)(Math.random()*20+20);
-					} else if(euclidianDistance >= 200 && euclidianDistance < 400) {
-						squareSize = (int)(Math.random()*6+4);
+						squareSize = (int)(Math.random()*15+15);
+					} else if(euclidianDistance >= 200 && euclidianDistance < 300) {
+						squareSize = (int)(Math.random()*10+10);
+					} else if(euclidianDistance >= 300 && euclidianDistance < 400) {
+						squareSize = (int)(Math.random()*6+6);
 					} else if(euclidianDistance >= 400 && euclidianDistance < 600) {
 						squareSize = (int)(Math.random()*5+2);
 					} else {
@@ -217,7 +219,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		FileHandle fh = new FileHandle("textures/new_ground.png");
 		PixmapIO.writePNG(fh, pixmap);
 		pixmap.dispose();
-
+		*/
 
 		ground = new Texture("textures/new_ground.png");
 	}
@@ -371,7 +373,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		zOrderableSpriteList.add(enemie);
 
 
-		for(int i = 0; i < 2; i++) {
+		for(int i = 0; i < 1; i++) {
 			// Medium blue slime
 			hitbox = new Rectangle(600, startY, 50, 40);
 			hpBar = new HpBar( new Rectangle(600, startY-7, 50, 40), hpBarsTextures);
@@ -425,6 +427,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 			zOrderableSpriteList.add(enemie);
 		}
 
+
 		// Mother blue slime
 		hitbox = new Rectangle(600, startY, 100, 80);
 		hpBar = new HpBar( new Rectangle(600, startY-7, 100, 80), hpBarsTextures);
@@ -477,7 +480,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		enemieList.add(enemie);
 		zOrderableSpriteList.add(enemie);
 
-		for(int i = 0; i < 2; i++) {
+		for(int i = 0; i < 700; i++) {
 			// Skeleton
 			hitbox = new Rectangle(600, startY, 34, 64);
 			hpBar = new HpBar( new Rectangle(600, startY-7, 34, 64), hpBarsTextures);
