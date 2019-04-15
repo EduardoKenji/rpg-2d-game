@@ -5,10 +5,12 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 public class ZOrderableSprite {
     float x, y;
     boolean updated;
+    float colorValue;
 
     public ZOrderableSprite(float y) {
         this.y = y;
         updated = true;
+        colorValue = 1;
     }
 
     public float getY() {
@@ -37,6 +39,14 @@ public class ZOrderableSprite {
 
     public void draw(SpriteBatch spriteBatch) {
 
+    }
+
+    public float getColorValue() {
+        return colorValue;
+    }
+
+    public void setColorValue(float colorValue) {
+        this.colorValue = colorValue;
     }
 }
 

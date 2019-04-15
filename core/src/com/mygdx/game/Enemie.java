@@ -31,6 +31,7 @@ public class Enemie extends ZOrderableSprite {
     HpBar hpBar;
     int experience;
     boolean dead;
+    String name;
 
     // Enemie projectiles properties
     float projectileSpeed, projectileLifeTime;
@@ -96,6 +97,8 @@ public class Enemie extends ZOrderableSprite {
 	boolean blockedArray[];
 	GameMap gameMap;
 
+	float colorValue;
+
     public Enemie(Rectangle hitbox, float moveSpeed, String spriteSheetPath, String projectileTexturePath, String walkingPEPath,  String gettingHitPEPath, String particleFolder, float walkingFrameDuration, int cols) {
         super(hitbox.getY());
         // Enemie hitbox
@@ -152,6 +155,8 @@ public class Enemie extends ZOrderableSprite {
 
 		// Enemie is initially not dead
 		dead = false;
+
+		colorValue = 1;
     }
 
     public void draw(SpriteBatch spriteBatch) {
@@ -162,12 +167,15 @@ public class Enemie extends ZOrderableSprite {
             walkingParticleEffect.draw(spriteBatch);
         }
 
+        spriteBatch.setColor(1, colorValue, colorValue, 1);
+
         if(isMoving) {
 			animation.draw(spriteBatch, hitbox.getX()+xOffset, hitbox.getY()+yOffset, spriteWidth, spriteHeight);
 		} else {
 			animation.drawStaticFrame(spriteBatch, hitbox.getX()+xOffset, hitbox.getY()+yOffset, spriteWidth, spriteHeight);
 		}
 
+		spriteBatch.setColor(1, 1, 1, 1);
 
         if(damaged) {
         	//gettingHitParticleEffect.scaleEffect(gettingHitParticleEffectScale);
@@ -220,14 +228,15 @@ public class Enemie extends ZOrderableSprite {
 
         // Update enemie position
         updatePosition();
+
         // Update hp bar
         hpBar.update(currentHp, maximumHp, currentShield, maximumShield);
         hpBar.updatePosition(hitbox.getX(), hitbox.getY() - 7);
 
-		// Update game map and blocked array
-		// Get directions where there are obstacles in map
-		// 0 - left, 1 - bottom, 2 - right, 3 - top
-		blockedArray = gameMap.updateHitbox(mapHitbox, 1);
+        // Enemie will shine red light when damaged
+		if(colorValue < 1) {
+			colorValue += Gdx.graphics.getDeltaTime() * 2;
+		}
     }
 
     // Update particles, called on draw()
@@ -421,6 +430,7 @@ public class Enemie extends ZOrderableSprite {
     	if(!dead) {
 			damaged = true;
 			gettingHitParticleEffect.reset();
+			colorValue = 0;
 		}
 
     }
@@ -894,6 +904,7 @@ public class Enemie extends ZOrderableSprite {
 
 	public void setGameMap(GameMap gameMap) {
 		this.gameMap = gameMap;
+		blockedArray = gameMap.updateHitbox(mapHitbox, 1);
 	}
 
 	public Rectangle getMapHitbox() {
@@ -902,5 +913,31 @@ public class Enemie extends ZOrderableSprite {
 
 	public void setMapHitbox(Rectangle mapHitbox) {
 		this.mapHitbox = mapHitbox;
+	}
+
+	public Sprite getMapHitboxSprite() {
+		return mapHitboxSprite;
+	}
+
+	public void setMapHitboxSprite(Sprite mapHitboxSprite) {
+		this.mapHitboxSprite = mapHitboxSprite;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	@Override
+	public float getColorValue() {
+		return colorValue;
+	}
+
+	@Override
+	public void setColorValue(float colorValue) {
+		this.colorValue = colorValue;
 	}
 }

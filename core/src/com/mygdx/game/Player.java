@@ -32,6 +32,7 @@ public class Player extends ZOrderableSprite {
 	float gettingHitParticleEffectScale;
     // Boolean to check if got hit
     boolean damaged;
+    float colorValue;
 
     // Direction
     String direction;
@@ -92,7 +93,7 @@ public class Player extends ZOrderableSprite {
         // Default direction
         direction = "playerWalkRight";
         // Default attack delay, attack timer will be incremented with elapsed time
-        attackDelay = 0.3f;
+        attackDelay = 1f;
         attackTimer = attackDelay;
         // Player projectile stats
         projectileSpeed = 4.5f;
@@ -117,6 +118,8 @@ public class Player extends ZOrderableSprite {
 		damaged = false;
 		walkingParticleEffectScale = 0.7f;
 		gettingHitParticleEffectScale = 0.25f;
+
+		colorValue = 1;
     }
 
     // Create player boolean animation map
@@ -150,6 +153,7 @@ public class Player extends ZOrderableSprite {
             walkingParticleEffect.draw(spriteBatch);
         }
 
+        spriteBatch.setColor(1, colorValue, colorValue, 1);
         // Draw attacking or walking animation
         if(playerBooleanHashMap.get("isTouchedDown") && isWalking()) {
             drawPlayerAttackingAnimation(spriteBatch);
@@ -165,6 +169,8 @@ public class Player extends ZOrderableSprite {
             //playerAnimationHashMap.get(direction).draw(spriteBatch, hitbox.getX()+xOffset, hitbox.getY()+yOffset, spriteWidth, spriteHeight);
 			playerAnimationHashMap.get("playerWalking").drawStaticFrame(spriteBatch, hitbox.getX()+xOffset, hitbox.getY()+yOffset, spriteWidth, spriteHeight);
         }
+
+		spriteBatch.setColor(1, 1, 1, 1);
 
 		if(damaged) {
 			gettingHitParticleEffect.scaleEffect(gettingHitParticleEffectScale);
@@ -251,6 +257,11 @@ public class Player extends ZOrderableSprite {
 				damaged = false;
 				gettingHitParticleEffect.reset();
 			}
+		}
+
+		// Player will shine red light when damaged
+		if(colorValue < 1) {
+			colorValue += Gdx.graphics.getDeltaTime() * 2;
 		}
 	}
 
@@ -450,6 +461,7 @@ public class Player extends ZOrderableSprite {
     }
 
     public void gotDamaged() {
+    	colorValue = 0;
     	damaged = true;
     	gettingHitParticleEffect.reset();
 	}
@@ -624,5 +636,13 @@ public class Player extends ZOrderableSprite {
     	this.gameMap = gameMap;
 		blockedArray = gameMap.updateHitbox(mapHitbox, 1);
 		gameMap.updatePlayerPosition(mapHitbox);
+	}
+
+	public float getColorValue() {
+		return colorValue;
+	}
+
+	public void setColorValue(float colorValue) {
+		this.colorValue = colorValue;
 	}
 }

@@ -60,12 +60,12 @@ public class Bullet extends ZOrderableSprite {
         }
     }
 
-    public void checkForCollision(Player player, ArrayList<Enemie> enemieList, ArrayList<FloatingText> floatingTextList) {
+    public void checkForCollision(Player player, ArrayList<Enemie> enemieList, ArrayList<FloatingText> floatingTextList, ScreenTargetStatus screenTargetStatus) {
         // Player generated the bullet
         // If the projectile is not a shadow of another projectile
         if(shadow != null) {
             if(entityId == 0) {
-                checkCollisionForPlayerProjectile(player, enemieList, floatingTextList);
+                checkCollisionForPlayerProjectile(player, enemieList, floatingTextList, screenTargetStatus);
                 // Enemie generated the bullet
             } else {
                 checkCollisionForEnemieProjectile(player, floatingTextList);
@@ -73,7 +73,7 @@ public class Bullet extends ZOrderableSprite {
         }
     }
 
-    public void checkCollisionForPlayerProjectile(Player player, ArrayList<Enemie> enemieList, ArrayList<FloatingText> floatingTextList) {
+    public void checkCollisionForPlayerProjectile(Player player, ArrayList<Enemie> enemieList, ArrayList<FloatingText> floatingTextList, ScreenTargetStatus screenTargetStatus) {
         for(Enemie enemie : enemieList) {
             float x1 = centerX - (bulletSprite.getBoundingRectangle().getWidth() / 2);
             float y1 = centerY - (bulletSprite.getBoundingRectangle().getHeight() / 2);
@@ -84,6 +84,7 @@ public class Bullet extends ZOrderableSprite {
                 if (checkIfPointIsInsideRectangle(x1, y1, bulletHitbox) || checkIfPointIsInsideRectangle(x2, y2, bulletHitbox)) {
                     // The projectile is still active
                     if(!dead) {
+                    	screenTargetStatus.setTarget(enemie);
                         FloatingText damageText = new FloatingText(""+damage, enemie.getHitbox().getCenterX(), enemie.getHitbox().getY()+enemie.getHitbox().getHeight());
                         damageText.setTextColor(Color.WHITE);
                         floatingTextList.add(damageText);
@@ -116,7 +117,7 @@ public class Bullet extends ZOrderableSprite {
         if (checkIfPointIsInsideRectangle(x1, y1, player.getHitbox()) || checkIfPointIsInsideRectangle(x2, y2, player.getHitbox())) {
             // The projectile is still active
             if(!dead) {
-                FloatingText damageText = new FloatingText(""+damage, player.getHitbox().getCenterX(), player.getHitbox().getY()+player.getHitbox().getHeight());
+                FloatingText damageText = new FloatingText(""+damage, player.getHitbox().getCenterX(), player.getHitbox().getY()+player.getHitbox().getHeight()+10);
                 damageText.setTextColor(Color.RED);
                 floatingTextList.add(damageText);
                 player.setCurrentHp(player.getCurrentHp() - damage);

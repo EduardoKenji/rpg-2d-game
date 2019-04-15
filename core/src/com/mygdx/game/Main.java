@@ -11,7 +11,6 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.PixmapIO;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
@@ -28,7 +27,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 	// Spritebatch to draw sprites, texts (with fonts), textures, and so forth
 	SpriteBatch spriteBatch;
 	// Camera to follow the player
-	OrthographicCamera camera;
+	OrthographicCamera camera, guiCamera;
 	// Textures
 	Texture background, ground;
 	// Class that takes care of day-time calculations
@@ -57,6 +56,10 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 	ZAxisComparator zAxisComparator;
 	// GameMap to check collisions and some hitboxes
 	GameMap gameMap;
+	// Show last attacked enemie status
+	ScreenTargetStatus screenTargetStatus;
+
+	final float gettingDamageThreshold = 0.32f;
 
 
 	@Override
@@ -69,8 +72,9 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		//font = createFont("dungeon_font.ttf", FONT_SIZE);
 		//font.setUseIntegerPositions(false);
 		//font.getRegion().getTexture().setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
-		font = new BitmapFont(Gdx.files.internal("fonts/arcade.fnt"), false);
-		font.getData().setScale(1, 1);
+		font = new BitmapFont(Gdx.files.internal("fonts/lilliput.fnt"), false);
+		font.setUseIntegerPositions(false);
+		//font.getData().setScale(1, 1);
 
 		// Initialize light array list
 		lightArrayList = new ArrayList<Light>();
@@ -93,6 +97,10 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		camera.setToOrtho(false,Gdx.graphics.getWidth(),Gdx.graphics.getHeight());
 		camera.viewportHeight = 600;
 		camera.viewportWidth = 800;
+		guiCamera = new OrthographicCamera();
+		guiCamera.setToOrtho(false,Gdx.graphics.getWidth(),Gdx.graphics.getHeight());
+		guiCamera.viewportHeight = 600;
+		guiCamera.viewportWidth = 800;
 
 		// Initialize sprite batch
 		spriteBatch=new SpriteBatch();
@@ -120,8 +128,8 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		player.setMapHitbox(new Rectangle(315, 212.5f, 33, 22));
         HpBar hpBar = new HpBar( new Rectangle(315, 205.5f, 33, 56), hpBarsTextures);
         player.setHpBar(hpBar);
-        player.setCurrentHp(40);
-        player.setMaximumHp(40);
+        player.setCurrentHp(90);
+        player.setMaximumHp(90);
         player.setBaseDamage(20);
 		zOrderableSpriteList.add(player);
 		// Add player hitbox to the gameMap
@@ -130,7 +138,8 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		player.setGameMap(gameMap);
 
 		// Day night cycle starts at 12:00 A.M.
-		dayNightCycle = new DayNightCycle(19, 0);
+		dayNightCycle = new DayNightCycle(1, 0);
+		dayNightCycle.setCurrentTimeText(new StaticText("",camera.position.x-375, camera.position.y+275, false));
 
 		// Projectile list
 		projectileList = new ArrayList<Bullet>();
@@ -147,6 +156,8 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		for(Enemie enemie: enemieList) {
 			enemie.setGameMap(gameMap);
 		}
+
+		screenTargetStatus = new ScreenTargetStatus(new Rectangle(250, 580, 300, 20), hpBarsTextures);
 
 		Gdx.input.setInputProcessor(this);
 
@@ -340,6 +351,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		hpBarsTextures[2] = new Texture("hp_bars/blue_bar.png");
 
 		float startY = 400;
+		int skeletonAmount = 5;
 
 		// Small blue slime
 		Rectangle hitbox = new Rectangle(600, startY, 25, 20);
@@ -358,6 +370,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		enemie.addHitBox(607, startY, 11, 21);
 		enemie.addHitBox(618, startY, 8, 17);
 		// HP bar and some stats
+		enemie.setName("Baby Blue Slime");
 		enemie.setHpBar(hpBar);
 		enemie.setCurrentHp(20);
 		enemie.setMaximumHp(20);
@@ -409,6 +422,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 			enemie.addHitBox(614, startY, 22, 40);
 			enemie.addHitBox(636, startY, 14, 28);
 			// HP bar and some stats
+			enemie.setName("Blue Slime");
 			enemie.setHpBar(hpBar);
 			enemie.setCurrentHp(50);
             enemie.setMaximumHp(50);
@@ -462,6 +476,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		enemie.addHitBox(628, startY, 44, 80);
 		enemie.addHitBox(672, startY, 28, 56);
 		// HP bar and some stats
+		enemie.setName("Mother Blue Slime");
 		enemie.setHpBar(hpBar);
 		enemie.setCurrentHp(150);
 		enemie.setMaximumHp(150);
@@ -498,7 +513,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		enemieList.add(enemie);
 		zOrderableSpriteList.add(enemie);
 
-		for(int i = 0; i < 5; i++) {
+		for(int i = 0; i < skeletonAmount; i++) {
 			// Skeleton
 			hitbox = new Rectangle(600, startY, 34, 64);
 			hpBar = new HpBar( new Rectangle(600, startY-7, 34, 64), hpBarsTextures);
@@ -512,13 +527,13 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 			enemie = new Enemie(hitbox, moveSpeed, spriteSheetPath, projectileTexturePath, walkingPEPath, gettingHitPEPath, particlesFolder, frameDuration, 11);
 			enemie.setMapHitbox(new Rectangle(600, startY, 34, 20));
 			enemie.addHitBox(600, startY, 34, 64);
-
 			// HP bar and some stats
+			enemie.setName("Skeleton");
 			enemie.setHpBar(hpBar);
-			enemie.setCurrentHp(1000);
-			enemie.setMaximumHp(1000);
+			enemie.setCurrentHp(120);
+			enemie.setMaximumHp(120);
 			enemie.setBaseDamage(10);
-			enemie.setExperience(10);
+			enemie.setExperience(8);
 			// Enemie sprite positioning
 			enemie.setSpriteWidth(200);
 			enemie.setSpriteHeight(200);
@@ -600,8 +615,14 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		// Draw lights
 		drawLight(spriteBatch);
 
+		// Entities getting damaged will shine red
+		drawEntityGettingDamaged(spriteBatch);
+
 		// Draw after framebuffer, so it does not get affected by illumination
 		drawFloatingTexts(spriteBatch);
+
+		// GUI: Such as menu and inventory windows, or game time
+		drawGUIScreenElements(spriteBatch);
 
 		// Remove projectiles
 		removeObjects();
@@ -650,6 +671,10 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		// Update Day/Night cycle
 		dayNightCycle.updateTime();
 		dayNightCycle.updateRGBValues();
+		dayNightCycle.updateText(guiCamera.position.x-375, guiCamera.position.y+275);
+		// Update target status from last enemy engaged
+		screenTargetStatus.update();
+		screenTargetStatus.updatePosition(guiCamera.position.x-150, guiCamera.position.y+280);
 		// Update map objects (update particle effects)
 		for(MapObject mapObject : mapObjectList) {
 			mapObject.update();
@@ -664,7 +689,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 			// Update position
 			projectile.update();
 			// Check for collision
-			projectile.checkForCollision(player, enemieList, floatingTextList);
+			projectile.checkForCollision(player, enemieList, floatingTextList, screenTargetStatus);
 		}
 		// Update enemies
 		for(Enemie enemie : enemieList) {
@@ -684,6 +709,9 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		}
 		player.updateCameraCenterOffset(camera.position.x, camera.position.y);
 		camera.update();
+
+		//guiCamera.position.set(Gdx.graphics.getWidth()/2, Gdx.graphics.getHeight()/2, 0);
+		//guiCamera.update();
 
 		// Update map
 		gameMap.resetMatrix();
@@ -707,7 +735,14 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		// Draw all static and dynamic map objects and entities
 		for(ZOrderableSprite sprite : zOrderableSpriteList) {
 			if(euclidianDistance(sprite.getX(), sprite.getY(), player.getHitbox().getCenterX(), player.getHitbox().getCenterY()) < 850) {
-				sprite.draw(spriteBatch);
+				/*if(!sprite.equals(player)) {
+					sprite.draw(spriteBatch);
+				} else if(sprite.equals(player) && player.getColorValue() > gettingDamageThreshold) {
+					sprite.draw(spriteBatch);
+				}*/
+				if(sprite.getColorValue() > gettingDamageThreshold) {
+					sprite.draw(spriteBatch);
+				}
 			}
 		}
 		// Debug draw map
@@ -740,19 +775,38 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		spriteBatch.begin();
 		spriteBatch.draw(frameBuffer.getColorBufferTexture(),-1,1,2,-2);
 		spriteBatch.end();
-
-
 	}
 
 	// Draw after framebuffer, so it does not get affected by illumination
 	public void drawFloatingTexts(SpriteBatch spriteBatch) {
-		spriteBatch.setBlendFunction(GL20.GL_SRC_ALPHA,GL20.GL_ONE_MINUS_SRC_ALPHA);
-		spriteBatch.setProjectionMatrix(camera.combined);
 		spriteBatch.begin();
 		// Draw floating texts
 		for(FloatingText floatingText : floatingTextList) {
 			floatingText.draw(spriteBatch, font);
 		}
+		spriteBatch.end();
+	}
+
+	public void drawEntityGettingDamaged(SpriteBatch spriteBatch) {
+		spriteBatch.setBlendFunction(GL20.GL_SRC_ALPHA,GL20.GL_ONE_MINUS_SRC_ALPHA);
+		spriteBatch.setProjectionMatrix(camera.combined);
+		spriteBatch.begin();
+		if(player.getColorValue() <= gettingDamageThreshold) {
+			player.draw(spriteBatch);
+		}
+		for(Enemie enemie : enemieList) {
+			if(enemie.getColorValue() <= gettingDamageThreshold) {
+				enemie.draw(spriteBatch);
+			}
+		}
+		spriteBatch.end();
+	}
+
+	public void drawGUIScreenElements(SpriteBatch spriteBatch) {
+		spriteBatch.setProjectionMatrix(guiCamera.combined);
+		spriteBatch.begin();
+		dayNightCycle.draw(spriteBatch, font);
+		screenTargetStatus.draw(spriteBatch, font);
 		spriteBatch.end();
 	}
 

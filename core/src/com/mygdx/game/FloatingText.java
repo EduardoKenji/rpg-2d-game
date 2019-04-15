@@ -14,9 +14,10 @@ public class FloatingText {
 	// Reference position
 	float x, y;
 	// Properties
-	final float incrementSpeed = 1.8f;
-	final float maxHeightOffset = 50;
-	float maxHeight;
+	float incrementSpeedX, incrementSpeedY;
+	final float lifeTime = 0.5f;
+	final float baseSpeed = 3;
+	float timer;
 	// Check if floating text should be removed from render
 	boolean dead;
 	Color textColor;
@@ -25,11 +26,14 @@ public class FloatingText {
 		this.text = text;
 		this.x = x;
 		this.y = y;
-		maxHeight = y+maxHeightOffset;
 		dead = false;
+		timer = 0;
 		if(glyphLayout == null) {
 			glyphLayout = new GlyphLayout();
 		}
+		float angle = (float)((Math.random()*40)+70);
+		incrementSpeedX = (float)(baseSpeed * Math.cos(Math.toRadians(angle)));
+		incrementSpeedY = (float)(baseSpeed * Math.sin(Math.toRadians(angle)));
 	}
 
 	public void draw(SpriteBatch spriteBatch, BitmapFont font) {
@@ -45,9 +49,13 @@ public class FloatingText {
 	}
 
 	public void update() {
-		float fpsIncrementSpeed = incrementSpeed * (Gdx.graphics.getDeltaTime() * 60);
-		y += fpsIncrementSpeed;
-		if(y > maxHeight) {
+		float fpsIncrementSpeedY = incrementSpeedY * (Gdx.graphics.getDeltaTime() * 60);
+		float fpsIncrementSpeedX = incrementSpeedX * (Gdx.graphics.getDeltaTime() * 60);
+		x += fpsIncrementSpeedX;
+		y += fpsIncrementSpeedY;
+		incrementSpeedY -= (Gdx.graphics.getDeltaTime() * 10);
+		timer += Gdx.graphics.getDeltaTime();
+		if(timer > lifeTime) {
 			dead = true;
 		}
 	}

@@ -60,8 +60,6 @@ public class MapObject extends ZOrderableSprite {
         particleEffect.setPosition(x, y);
         float randomOffsetToFinish = (float)(Math.random()*1500)+150;
         timeToResetPE = (particleEffect.getEmitters().get(0).getDuration().getLowMin() - randomOffsetToFinish)/1000f;
-        System.out.println(particleEffect.getEmitters().get(0).getDuration().getLowMin());
-		System.out.println(timeToResetPE);
     }
 
     public void createLight(String lightTexture, ArrayList<Light> lightArrayList, float yOffset) {
