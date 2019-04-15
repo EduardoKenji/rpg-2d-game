@@ -93,7 +93,7 @@ public class Player extends ZOrderableSprite {
         // Default direction
         direction = "playerWalkRight";
         // Default attack delay, attack timer will be incremented with elapsed time
-        attackDelay = 1f;
+        attackDelay = 0.3f;
         attackTimer = attackDelay;
         // Player projectile stats
         projectileSpeed = 4.5f;

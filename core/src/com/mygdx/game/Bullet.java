@@ -85,7 +85,7 @@ public class Bullet extends ZOrderableSprite {
                     // The projectile is still active
                     if(!dead) {
                     	screenTargetStatus.setTarget(enemie);
-                        FloatingText damageText = new FloatingText(""+damage, enemie.getHitbox().getCenterX(), enemie.getHitbox().getY()+enemie.getHitbox().getHeight());
+                        FloatingText damageText = new FloatingText(""+damage+(int)(Math.random()*10), enemie.getHitbox().getCenterX(), enemie.getHitbox().getY()+enemie.getHitbox().getHeight());
                         damageText.setTextColor(Color.WHITE);
                         floatingTextList.add(damageText);
                         enemie.setCurrentHp(enemie.getCurrentHp() - damage);

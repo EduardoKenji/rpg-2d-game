@@ -138,7 +138,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		player.setGameMap(gameMap);
 
 		// Day night cycle starts at 12:00 A.M.
-		dayNightCycle = new DayNightCycle(1, 0);
+		dayNightCycle = new DayNightCycle(17, 30);
 		dayNightCycle.setCurrentTimeText(new StaticText("",camera.position.x-375, camera.position.y+275, false));
 
 		// Projectile list
