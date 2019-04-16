@@ -63,7 +63,7 @@ public class MapObject extends ZOrderableSprite {
     }
 
     public void createLight(String lightTexture, ArrayList<Light> lightArrayList, float yOffset) {
-		light = new Light(new Sprite(new Texture(lightTexture)), new Rectangle(x, y+yOffset, width, height));
+		light = new Light(new Sprite(new Texture(lightTexture)), new Rectangle(x, y+yOffset, width, height), false, 0);
 		lightArrayList.add(light);
 	}
 

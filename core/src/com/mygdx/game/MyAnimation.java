@@ -26,35 +26,10 @@ public class MyAnimation {
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < columns; j++) {
                 tmp2[index++] = tmp[i][j];
-                index++;
             }
         }
         // Initialize the Animation with the frame interval and array of frames
         animation = new Animation<TextureRegion>(frameDuration, tmp2);
-        stateTime = 0f;
-    }
-
-    MyAnimation(Texture texture, int rows, int columns, float frameDuration, int startIndex, int endIndex) {
-        // Get sprite sheet and store in tmp
-        TextureRegion[][] tmp = TextureRegion.split(texture,
-                texture.getWidth() / columns,
-                texture.getHeight() / rows);
-        // Transform tmp matrix in 1D array tmp2
-        TextureRegion[] tmp2 = new TextureRegion[endIndex-startIndex+1];
-        int index = 0;
-        int index2 = 0;
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < columns; j++) {
-                if(index >= startIndex && index <= endIndex) {
-                    tmp2[index2] = tmp[i][j];
-                    index2++;
-                }
-                index++;
-            }
-        }
-        // Initialize the Animation with the frame interval and array of frames
-        animation = new Animation<TextureRegion>(frameDuration, tmp2);
-
         stateTime = 0f;
     }
 

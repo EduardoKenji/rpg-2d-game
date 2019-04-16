@@ -17,6 +17,7 @@ public class Player extends ZOrderableSprite {
     Rectangle hitbox;
     Sprite hitboxSprite;
     HashMap<String, Boolean> playerBooleanHashMap;
+    PlayerClass playerClass;
 
     Rectangle mapHitbox;
 	Sprite mapHitboxSprite;
@@ -47,26 +48,12 @@ public class Player extends ZOrderableSprite {
 
     // Player stats
     int playerId;
-    float moveSpeed;
-    float attackDelay, attackTimer;
-    int baseDamage;
-    float currentHp, maximumHp;
-    float currentShield, maximumShield;
     HpBar hpBar;
-    int experience;
 
-    // Player projectiles properties
-    int shootingPattern = 0;
     BulletController bulletController;
-    float projectileSpeed, projectileLifeTime;
-    float projectileWidth, projectileHeight;
-    Texture projectileTexture, projectileShadowTexture;
 
     // If rotate projectile is false, the angle to rotate the spawned bullet/projectile will be 0
     final boolean rotateProjectile = true;
-
-    // Animation delay to change frames
-    float frameDuration;
 
     // Camera offset
 	float screenToViewportX, screenToViewportY;
@@ -78,10 +65,10 @@ public class Player extends ZOrderableSprite {
 
 	GameMap gameMap;
 
-    public Player(Rectangle hitbox, float moveSpeed) {
+    public Player(Rectangle hitbox, PlayerClass playerClass) {
         super(hitbox.getY());
         this.hitbox = hitbox;
-        this.moveSpeed = moveSpeed;
+        this.playerClass = playerClass;
         // Create player hitbox sprite and configure hitbox
         hitboxSprite = new Sprite(new Texture("textures/hitbox.png"));
         mapHitboxSprite = new Sprite(new Texture("textures/map_hitbox.png"));
@@ -93,22 +80,12 @@ public class Player extends ZOrderableSprite {
         // Default direction
         direction = "playerWalkRight";
         // Default attack delay, attack timer will be incremented with elapsed time
-        attackDelay = 0.3f;
-        attackTimer = attackDelay;
-        // Player projectile stats
-        projectileSpeed = 4.5f;
-        projectileLifeTime = 0.46f;
-        projectileWidth = 36;
-        projectileHeight = 4.5f;
+
         // Create player boolean animation map
-        String attackSpriteSheetPath = "characters/knight_attack_spritesheet.png";
-        String walkSpriteSheetPath = "characters/knight_walking_spritesheet.png";
-        createPlayerAnimationHashMap(walkSpriteSheetPath, attackSpriteSheetPath);
+        createPlayerAnimationHashMap();
         // Player id
         playerId = 0;
         // Projectile texture
-        projectileTexture = new Texture("projectiles/wood_projectile.png");
-        projectileShadowTexture = new Texture("projectiles/shadow_projectile.png");
         // Walking on dirt/grass particle effect
         walkingParticleEffect = new ParticleEffect();
         walkingParticleEffect.load(Gdx.files.internal("particle_effects/walking_on_dirty.pe"), Gdx.files.internal("particle_effects"));
@@ -123,15 +100,14 @@ public class Player extends ZOrderableSprite {
     }
 
     // Create player boolean animation map
-    public void createPlayerAnimationHashMap(String walkSpriteSheetPath, String attackSpriteSheetPath) {
+    public void createPlayerAnimationHashMap() {
         playerAnimationHashMap = new HashMap<String, MyAnimation>();
-        frameDuration = 0.02f;
 		playerAnimationHashMap.put("playerWalking",
-				new MyAnimation(new Texture("characters/player/player_walking.png"), 1, 11, frameDuration, 0, 10));
+				new MyAnimation(playerClass.getWalkingTexture(), 1, 11, playerClass.getFrameDuration()));
 		playerAnimationHashMap.put("playerAttacking",
-				new MyAnimation(new Texture("characters/player/player_attacking.png"), 1, 11, frameDuration, 0, 10));
+				new MyAnimation(playerClass.getAttackingTexture(), 1, 11, playerClass.getFrameDuration()));
 		playerAnimationHashMap.put("playerAttackingIdle",
-				new MyAnimation(new Texture("characters/player/player_attacking_idle.png"), 1, 11, frameDuration, 0, 10));
+				new MyAnimation(playerClass.getAttackingIdleTexture(), 1, 11, playerClass.getFrameDuration()));
     }
 
     // Create player boolean hash map
@@ -147,14 +123,14 @@ public class Player extends ZOrderableSprite {
 
     public void draw(SpriteBatch spriteBatch) {
 
-        // Draw walking on dirty particle effects
+        // Draw walkingAnimation on dirty particle effects
         if(isWalking() && !isWalkingAtSimultaneousOpposingDirections()) {
             walkingParticleEffect.scaleEffect(walkingParticleEffectScale);
             walkingParticleEffect.draw(spriteBatch);
         }
 
         spriteBatch.setColor(1, colorValue, colorValue, 1);
-        // Draw attacking or walking animation
+        // Draw attackingAnimation or walkingAnimation animation
         if(playerBooleanHashMap.get("isTouchedDown") && isWalking()) {
             drawPlayerAttackingAnimation(spriteBatch);
 
@@ -164,7 +140,7 @@ public class Player extends ZOrderableSprite {
             drawPlayerWalkingAnimation(spriteBatch);
         }
 
-        // If the player is not walking nor attacking, render static frame for idle stance
+        // If the player is not walkingAnimation nor attackingAnimation, render static frame for idle stance
         if((!playerBooleanHashMap.get("isTouchedDown") && !isWalking())) {
             //playerAnimationHashMap.get(direction).draw(spriteBatch, hitbox.getX()+xOffset, hitbox.getY()+yOffset, spriteWidth, spriteHeight);
 			playerAnimationHashMap.get("playerWalking").drawStaticFrame(spriteBatch, hitbox.getX()+xOffset, hitbox.getY()+yOffset, spriteWidth, spriteHeight);
@@ -220,9 +196,9 @@ public class Player extends ZOrderableSprite {
     }
 
     // Update a lot of player stats and properties
-    public void update(ArrayList<Bullet> projectileList, ArrayList<ZOrderableSprite> zOrderableSpriteList) {
+    public void update(ArrayList<Bullet> projectileList, ArrayList<ZOrderableSprite> zOrderableSpriteList,  ArrayList<Light> lightList) {
         for(Map.Entry<String, MyAnimation> entry : playerAnimationHashMap.entrySet()) {
-            // If the player is walking into direction
+            // If the player is walkingAnimation into direction
             if(entry.getKey().equals(direction) && !playerBooleanHashMap.get(direction)) {
             } else {
                 playerAnimationHashMap.get(entry.getKey()).update();
@@ -233,19 +209,19 @@ public class Player extends ZOrderableSprite {
         // Update player position
         updatePosition();
         // Update HP bar
-        hpBar.update(currentHp, maximumHp, currentShield, maximumShield);
+        hpBar.update(playerClass.getCurrentHp(), playerClass.getMaximumHp(), playerClass.getCurrentShield(), playerClass.getMaximumShield());
         hpBar.updatePosition(hitbox.getX(), hitbox.getY() - 7);
         // Update projectile shooting
-        updateAttack(projectileList, zOrderableSpriteList);
+        updateAttack(projectileList, zOrderableSpriteList, lightList);
         // Update direction if shooting
         updateDirectionIfShooting();
         // Attack timer will be incremented with elapsed time
-        attackTimer += Gdx.graphics.getDeltaTime();
+        playerClass.setAttackTimer(playerClass.getAttackTimer() + Gdx.graphics.getDeltaTime());
     }
 
 	// Update particles, called on draw()
     public void updateParticles() {
-		// Update walking particle effect
+		// Update walkingAnimation particle effect
 		walkingParticleEffect.update(Gdx.graphics.getDeltaTime());
 		if(walkingParticleEffect.isComplete() && isWalking()) {
 			walkingParticleEffect.reset();
@@ -266,33 +242,34 @@ public class Player extends ZOrderableSprite {
 	}
 
     // Verify if player can generate another projectile and create it, if possible
-    public void updateAttack(ArrayList<Bullet> projectileList, ArrayList<ZOrderableSprite> zOrderableSpriteList) {
+    public void updateAttack(ArrayList<Bullet> projectileList, ArrayList<ZOrderableSprite> zOrderableSpriteList, ArrayList<Light> lightList) {
         // If touch/pointer is at clicked (or at screen) or is being dragged across the screen
-        if(playerBooleanHashMap.get("isTouchedDown") && attackTimer > attackDelay) {
-            // Get the sprite for the bullet
-            Sprite bulletSprite = new Sprite(projectileTexture);
-            Sprite bulletShadowSprite = new Sprite(projectileShadowTexture);
+        if(playerBooleanHashMap.get("isTouchedDown") && playerClass.getAttackTimer() > playerClass.getAttackDelay()) {
             // Determines the angle the player is shooting to
             angle = calculateAngle();
             // Not actually used as hitbox, as the sprite has a bounding rectangle
-            Rectangle bulletHitbox = new Rectangle(hitbox.getCenterX(), hitbox.getCenterY(), projectileWidth, projectileHeight);
-            Rectangle bulletShadowHitbox = new Rectangle(hitbox.getCenterX(), hitbox.getCenterY()-11, projectileWidth, projectileHeight);
+            Rectangle bulletHitbox = new Rectangle(hitbox.getCenterX(), hitbox.getCenterY(), playerClass.getProjectileWidth(), playerClass.getProjectileHeight());
+            Rectangle bulletShadowHitbox = new Rectangle(hitbox.getCenterX(), hitbox.getY(),  playerClass.getProjectileWidth()/2, playerClass.getProjectileHeight()/2);
             // The player entity id is 0
             // Rotate projectile boolean controls is the new bullet should or not be rotated
             if(bulletController == null) {
-                bulletController = new BulletController(angle, shootingPattern, baseDamage);
+                bulletController = new BulletController(angle, playerClass.getShootingPattern(), playerClass.getBaseDamage());
             }
+            bulletController.setDamageRange(playerClass.getMinimumRangeOffset(), playerClass.getMaximumRangeOffset());
             bulletController.setAngle(angle);
             bulletController.setBulletHitbox(bulletHitbox);
             bulletController.setBulletShadowHitbox(bulletShadowHitbox);
-            bulletController.setProjectileTexture(projectileTexture);
-            bulletController.setProjectileShadowTexture(projectileShadowTexture);
-            bulletController.setProjectileSpeed(projectileSpeed);
-            bulletController.setProjectileLifeTime(projectileLifeTime);
+            bulletController.setProjectileTexture(playerClass.getProjectileTexture());
+            bulletController.setProjectileShadowTexture(playerClass.getProjectileShadowTexture());
+            bulletController.setProjectileSpeed(playerClass.getProjectileSpeed());
+            bulletController.setProjectileLifeTime(playerClass.getProjectileLifeTime());
             bulletController.setEntityId(playerId);
+            bulletController.setLightTexture(playerClass.getLightTexture(), lightList);
+            bulletController.setAttackParticleEffectPath(playerClass.getAttackParticleEffectPath());
+			bulletController.setAttackParticleEffectFolderPath(playerClass.getAttackParticleEffectFolderPath());
             bulletController.createBullets(projectileList, zOrderableSpriteList, rotateProjectile);
             // Reset attack timer
-            attackTimer = 0f;
+            playerClass.setAttackTimer(0f);
         }
     }
 
@@ -324,16 +301,21 @@ public class Player extends ZOrderableSprite {
     }
 
     int i;
-    float sin45Deg = 0.707f;
+    final float sin45Deg = 0.707f;
 
     // Update player's position according to its move speed
     public void updatePosition() {
 		float fpsBoundMoveSpeed;
-		// If player is walking diagonally, multiply move speed by sin(45º), as there will be 0.707 for each direction
-    	if(isDiagonalWalking()) {
-			fpsBoundMoveSpeed = moveSpeed * (Gdx.graphics.getDeltaTime() * 60 * sin45Deg);
-		} else {
-			fpsBoundMoveSpeed = moveSpeed * (Gdx.graphics.getDeltaTime() * 60);
+		fpsBoundMoveSpeed = playerClass.getBaseMoveSpeed()* (Gdx.graphics.getDeltaTime() * 60);
+
+		// If the player is walkingAnimation diagonally, multiply move speed by sin(45º), as there will be 0.707 for each direction
+  		if(isDiagonalWalking()) {
+			fpsBoundMoveSpeed *= (sin45Deg);
+		}
+
+		// If the player is attackingAnimation, reduce its speed
+		if(playerBooleanHashMap.get("isTouchedDown")) {
+			fpsBoundMoveSpeed *= 0.70f;
 		}
 
 		if(playerBooleanHashMap.get("playerWalkLeft")) {
@@ -352,7 +334,7 @@ public class Player extends ZOrderableSprite {
         // Update ZOrderableSprite inherited y value
         setX(hitbox.getX());
         setY(hitbox.getY());
-        // Update walking on dirt/grass particle effect position to the center of the player's hitbox
+        // Update walkingAnimation on dirt/grass particle effect position to the center of the player's hitbox
         walkingParticleEffect.setPosition(hitbox.getCenterX(), hitbox.getY()-5);
 		// Update getting hit particle effect position to the center of the player's hitbox
 		gettingHitParticleEffect.setPosition(hitbox.getCenterX(), hitbox.getCenterY());
@@ -466,52 +448,12 @@ public class Player extends ZOrderableSprite {
     	gettingHitParticleEffect.reset();
 	}
 
-    public float getCurrentHp() {
-        return currentHp;
-    }
-
-    public void setCurrentHp(float currentHp) {
-        this.currentHp = currentHp;
-    }
-
-    public float getMaximumHp() {
-        return maximumHp;
-    }
-
-    public void setMaximumHp(float maximumHp) {
-        this.maximumHp = maximumHp;
-    }
-
-    public float getCurrentShield() {
-        return currentShield;
-    }
-
-    public void setCurrentShield(float currentShield) {
-        this.currentShield = currentShield;
-    }
-
-    public float getMaximumShield() {
-        return maximumShield;
-    }
-
-    public void setMaximumShield(float maximumShield) {
-        this.maximumShield = maximumShield;
-    }
-
     public HpBar getHpBar() {
         return hpBar;
     }
 
     public void setHpBar(HpBar hpBar) {
         this.hpBar = hpBar;
-    }
-
-    public int getBaseDamage() {
-        return baseDamage;
-    }
-
-    public void setBaseDamage(int baseDamage) {
-        this.baseDamage = baseDamage;
     }
 
     public ParticleEffect getWalkingParticleEffect() {
@@ -551,20 +493,20 @@ public class Player extends ZOrderableSprite {
 		return gettingHitParticleEffectScale;
 	}
 
-    public int getExperience() {
-        return experience;
-    }
-
-    public void setExperience(int experience) {
-        this.experience = experience;
-    }
-
 	public boolean isAdjustCamera() {
 		return adjustCamera;
 	}
 
 	public void setAdjustCamera(boolean adjustCamera) {
 		this.adjustCamera = adjustCamera;
+	}
+
+	public PlayerClass getPlayerClass() {
+		return playerClass;
+	}
+
+	public void setPlayerClass(PlayerClass playerClass) {
+		this.playerClass = playerClass;
 	}
 
 	public void setScreenToViewport(float viewportWidth, float viewportHeight) {

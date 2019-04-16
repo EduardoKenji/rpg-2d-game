@@ -3,12 +3,18 @@ package com.mygdx.game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.ParticleEffect;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 import java.util.ArrayList;
 
 public class Bullet extends ZOrderableSprite {
+
+	ParticleEffect projectileParticleEffect;
+	float particleEffectOffsetX, particleEffectOffsetY;
+
+	Light projectileLight;
     Sprite bulletSprite;
     float speed, range, angle;
     float centerX, centerY;
@@ -22,8 +28,9 @@ public class Bullet extends ZOrderableSprite {
     Bullet shadow;
 
     // Entity id represents the responsible for shooting the projectile
-    public Bullet(Sprite bulletSprite, Rectangle rectangle, float speed, float range, int damage, float angle, int entityId, Bullet shadow) {
-        super(rectangle.getY());
+    public Bullet(Sprite bulletSprite, Rectangle rectangle, float speed, float range, int damage, float angle, int entityId, Bullet shadow, float trueY) {
+        // Used to calculate depth like a Z-axis, the projectile's shadow Y coordinate should only be slightly lower than the projectile's own Y coordinate
+        super(trueY);
         this.bulletSprite = bulletSprite;
         // Bullet properties
         this.speed = speed;
@@ -45,11 +52,21 @@ public class Bullet extends ZOrderableSprite {
         this.shadow = shadow;
     }
 
-    void update() {
+    float incrementX, incrementY;
 
+    void update() {
         float fpsBoundMoveSpeed = speed * (Gdx.graphics.getDeltaTime() * 60);
-        centerX += (float)(fpsBoundMoveSpeed * Math.cos(Math.toRadians(angle)));
-        centerY += (float)(fpsBoundMoveSpeed * Math.sin(Math.toRadians(angle)));
+        incrementX = (float)(fpsBoundMoveSpeed * Math.cos(Math.toRadians(angle)));
+        incrementY = (float)(fpsBoundMoveSpeed * Math.sin(Math.toRadians(angle)));
+        centerX += incrementX;
+        centerY += incrementY;
+        // Update light, if there is any
+		if(projectileLight != null) {
+			projectileLight.getRectangleBoundaries().setX(projectileLight.getRectangleBoundaries().getX()+ incrementX);
+			projectileLight.getRectangleBoundaries().setY(projectileLight.getRectangleBoundaries().getY()+ incrementY);
+			projectileLight.update();
+			projectileLight.updateDistance();
+		}
         setX(centerX);
         setY(centerY);
         bulletSprite.setCenter(centerX, centerY);
@@ -58,7 +75,19 @@ public class Bullet extends ZOrderableSprite {
         if(timer >= range) {
            dead = true;
         }
+        // Update particle effect, is there is any
+		updateParticleEffect();
     }
+
+    public void updateParticleEffect() {
+		if(projectileParticleEffect != null) {
+			projectileParticleEffect.update(Gdx.graphics.getDeltaTime());
+			if(projectileParticleEffect.isComplete()) {
+				projectileParticleEffect.reset();
+			}
+			projectileParticleEffect.setPosition(centerX+particleEffectOffsetX, centerY+particleEffectOffsetY);
+		}
+	}
 
     public void checkForCollision(Player player, ArrayList<Enemie> enemieList, ArrayList<FloatingText> floatingTextList, ScreenTargetStatus screenTargetStatus) {
         // Player generated the bullet
@@ -85,7 +114,7 @@ public class Bullet extends ZOrderableSprite {
                     // The projectile is still active
                     if(!dead) {
                     	screenTargetStatus.setTarget(enemie);
-                        FloatingText damageText = new FloatingText(""+damage+(int)(Math.random()*10), enemie.getHitbox().getCenterX(), enemie.getHitbox().getY()+enemie.getHitbox().getHeight());
+                        FloatingText damageText = new FloatingText(""+damage, enemie.getHitbox().getCenterX(), enemie.getHitbox().getY()+enemie.getHitbox().getHeight());
                         damageText.setTextColor(Color.WHITE);
                         floatingTextList.add(damageText);
                         enemie.setCurrentHp(enemie.getCurrentHp() - damage);
@@ -99,6 +128,8 @@ public class Bullet extends ZOrderableSprite {
                         }
                         // Elimate this bullet
                         dead = true;
+                        // Eliminate projectile's light
+                        projectileLight.setDead(true);
                         // Eliminate projectile's shadow
                         shadow.setDead(true);
                     }
@@ -118,15 +149,35 @@ public class Bullet extends ZOrderableSprite {
             // The projectile is still active
             if(!dead) {
                 FloatingText damageText = new FloatingText(""+damage, player.getHitbox().getCenterX(), player.getHitbox().getY()+player.getHitbox().getHeight()+10);
-                damageText.setTextColor(Color.RED);
-                floatingTextList.add(damageText);
-                player.setCurrentHp(player.getCurrentHp() - damage);
-                player.gotDamaged();
+                if(player.getPlayerClass().getCurrentShield() > 0) {
+					damageText.setTextColor(Color.BLUE);
+					player.getPlayerClass().setCurrentShield(player.getPlayerClass().getCurrentShield() - damage);
+				} else {
+					damageText.setTextColor(Color.RED);
+					player.getPlayerClass().setCurrentHp(player.getPlayerClass().getCurrentHp() - damage);
+				}
+				player.gotDamaged();
+				floatingTextList.add(damageText);
                 dead = true;
                 shadow.setDead(true);
             }
         }
     }
+
+	public void createLight(Texture lightTexture, ArrayList<Light> lightArrayList, float sizeOffset, float xOffset, float yOffset) {
+		projectileLight = new Light(new Sprite(lightTexture),
+				new Rectangle(bulletSprite.getX()-sizeOffset+xOffset, bulletSprite.getY()-sizeOffset+yOffset,
+						bulletSprite.getWidth()+sizeOffset*2, bulletSprite.getHeight()+sizeOffset*2), true, range);
+		lightArrayList.add(projectileLight);
+	}
+
+	public void createParticleEffect(String PEpath, String PEFolder, float particleEffectOffset) {
+		projectileParticleEffect = new ParticleEffect();
+		projectileParticleEffect.load(Gdx.files.internal(PEpath), Gdx.files.internal(PEFolder));
+		this.particleEffectOffsetX = (float)(particleEffectOffset * Math.cos(Math.toRadians(angle)));
+		this.particleEffectOffsetY = (float)(particleEffectOffset * Math.sin(Math.toRadians(angle)));
+		projectileParticleEffect.setPosition(centerX+particleEffectOffsetX, centerY+particleEffectOffsetY);
+	}
 
     public boolean checkIfPointIsInsideRectangle(float x, float y, Rectangle rectangle) {
         if(x > rectangle.getX() && x < rectangle.getX()+rectangle.getWidth() &&
@@ -146,6 +197,11 @@ public class Bullet extends ZOrderableSprite {
 
     public void draw(SpriteBatch spriteBatch) {
         bulletSprite.draw(spriteBatch);
+        // Draw particle effect, is there is any
+        if(projectileParticleEffect != null) {
+			projectileParticleEffect.draw(spriteBatch);
+		}
+
     }
 
     public Sprite getBulletSprite() {

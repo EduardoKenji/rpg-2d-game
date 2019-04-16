@@ -111,7 +111,7 @@ public class Enemie extends ZOrderableSprite {
         originY = hitbox.getY();
 
         // Create enemie's animations
-        animation = new MyAnimation(new Texture(spriteSheetPath), 1, cols, walkingFrameDuration, 0, cols-1);
+        animation = new MyAnimation(new Texture(spriteSheetPath), 1, cols, walkingFrameDuration);
 
 		// Randomize enemie initial facing direction
 		int random = (int)(Math.random()*2);
@@ -161,7 +161,7 @@ public class Enemie extends ZOrderableSprite {
 
     public void draw(SpriteBatch spriteBatch) {
 
-        // Draw walking particle effect if enemie is moving
+        // Draw walkingAnimation particle effect if enemie is moving
         if(isMoving) {
 			//walkingParticleEffect.scaleEffect(walkingParticleEffectScale);
             walkingParticleEffect.draw(spriteBatch);
@@ -242,7 +242,7 @@ public class Enemie extends ZOrderableSprite {
     // Update particles, called on draw()
     public void updateParticles() {
 
-        // Update walking particle effect
+        // Update walkingAnimation particle effect
         walkingParticleEffect.update(Gdx.graphics.getDeltaTime());
         if(walkingParticleEffect.isComplete()) {
             walkingParticleEffect.reset();
@@ -389,7 +389,7 @@ public class Enemie extends ZOrderableSprite {
 
     public void updatePosition() {
         hitboxSprite.setPosition(hitbox.getX(), hitbox.getY());
-        // Update walking PE position
+        // Update walkingAnimation PE position
         walkingParticleEffect.setPosition(hitbox.getCenterX(), hitbox.getY());
         // Update getting hit PE position
         gettingHitParticleEffect.setPosition(hitbox.getCenterX(), hitbox.getCenterY());

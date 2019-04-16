@@ -71,12 +71,8 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		colorHashMap = createColorHashMap();
 
 		// Create font
-		//font = createFont("dungeon_font.ttf", FONT_SIZE);
-		//font.setUseIntegerPositions(false);
-		//font.getRegion().getTexture().setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
 		font = new BitmapFont(Gdx.files.internal("fonts/lilliput.fnt"), false);
 		font.setUseIntegerPositions(false);
-		//font.getData().setScale(1, 1);
 
 		// Initialize light array list
 		lightArrayList = new ArrayList<Light>();
@@ -122,17 +118,46 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		Texture hpBarsTextures[] = new Texture[3];
 		hpBarsTextures[0] = new Texture("hp_bars/black_bar.png");
 		hpBarsTextures[1] = new Texture("hp_bars/green_bar.png");
-		hpBarsTextures[2] = new Texture("hp_bars/blue_bar.png");
+		hpBarsTextures[2] = new Texture("hp_bars/shield_bar.png");
 
-		player = new Player(new Rectangle(315, 212.5f, 33, 56), 5);
+		PlayerClass wizard = new PlayerClass("characters/player/wizard_walking.png",
+				"characters/player/wizard_attacking.png",
+				"characters/player/wizard_attacking_idle.png",
+				0,
+				"projectiles/wizard_projectile.png",
+				"projectiles/wizard_projectile_shadow.png",
+				"lights/fire_light.png",
+				"particle_effects/wizard_fireball.pe", "particle_effects",
+				8f, 0.6f,
+				32, 16,
+				3, 10,
+				-2, 3, 0.3f,
+				90, 90,
+				50, 50,
+				 200, 200);
+
+		PlayerClass knight = new PlayerClass("characters/player/knight_walking.png",
+				"characters/player/knight_attacking.png",
+				"characters/player/knight_attacking_idle.png",
+				0,
+				"projectiles/wood_projectile.png",
+				"projectiles/shadow_projectile.png",
+				null,
+				null, null,
+				6f, 0.45f,
+				36, 4.5f,
+				4, 25,
+				-3, 10, 1f,
+				220, 220,
+				0, 0,
+				50, 50);
+
+		player = new Player(new Rectangle(315, 212.5f, 33, 56), wizard);
 		player.setScreenToViewport(camera.viewportWidth, camera.viewportHeight);
 		player.setGettingHitParticleEffectScale(1.3f);
 		player.setMapHitbox(new Rectangle(315, 212.5f, 33, 22));
 		HpBar hpBar = new HpBar(new Rectangle(315, 205.5f, 33, 56), hpBarsTextures);
 		player.setHpBar(hpBar);
-		player.setCurrentHp(90);
-		player.setMaximumHp(90);
-		player.setBaseDamage(20);
 		zOrderableSpriteList.add(player);
 		// Add player hitbox to the gameMap
 		//gameMap.updateHitbox(player.getMapHitbox(), 1);
@@ -140,7 +165,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		player.setGameMap(gameMap);
 
 		// Day night cycle starts at 12:00 A.M.
-		dayNightCycle = new DayNightCycle(15, 30);
+		dayNightCycle = new DayNightCycle(20, 30);
 		dayNightCycle.setCurrentTimeText(new StaticText("", camera.position.x - 375, camera.position.y + 275, false));
 
 		// Projectile list
@@ -341,7 +366,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 			mapObject.setyOffset(-38);
 			mapObject.setHitbox(new Rectangle(randomX+128-mapObjectHitboxWidth/2, randomY, mapObjectHitboxWidth, mapObjectHitboxHeight));
 			mapObject.createParticleEffect("particle_effects/torch_fire.pe", "particle_effects", mapObject.getX()+mapObject.getWidth()/2, mapObject.getY()+63);
-			mapObject.createLight("textures/fire_light.png", lightArrayList, -64);
+			mapObject.createLight("lights/fire_light.png", lightArrayList, -64);
 			gameMap.updateHitbox(mapObject.getHitbox(), 2);
 			mapObjectList.add(mapObject);
 			zOrderableSpriteList.add(mapObject);
@@ -389,10 +414,10 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		enemie.setWalkingParticleEffectScale(0.4f);
 		enemie.setGettingHitParticleEffectScale(0.4f);
 		// AI properties
-		// 1: Hostile random walking AI: the enemie will either stay idle or walk around randomly
+		// 1: Hostile random walkingAnimation AI: the enemie will either stay idle or walk around randomly
 		enemie.setEnemieId(1000);
 		enemie.setAiType(1);
-		enemie.setHostileRange(200f);
+		enemie.setHostileRange(250f);
 		enemie.setPlayer(player);
 		enemie.setAiTimeToAction(0.25f);
 		enemie.setAiTimeToChangeDecision(0.9f);
@@ -441,7 +466,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 			enemie.setWalkingParticleEffectScale(1f);
 			enemie.setGettingHitParticleEffectScale(1f);
 			// AI properties
-			// 2: Hostile spawner random walking AI: the enemie will either stay idle or walk around randomly
+			// 2: Hostile spawner random walkingAnimation AI: the enemie will either stay idle or walk around randomly
 			enemie.setEnemieId(1001);
 			enemie.setAiType(1);
 			enemie.setHostileRange(250f);
@@ -495,10 +520,10 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		enemie.setWalkingParticleEffectScale(1.7f);
 		enemie.setGettingHitParticleEffectScale(1.7f);
 		// AI properties
-		// 2: Hostile spawner random walking AI: the enemie will either stay idle or walk around randomly
+		// 2: Hostile spawner random walkingAnimation AI: the enemie will either stay idle or walk around randomly
 		enemie.setEnemieId(1002);
 		enemie.setAiType(1);
-		enemie.setHostileRange(250f);
+		enemie.setHostileRange(300f);
 		enemie.setPlayer(player);
 		enemie.setAiTimeToAction(0.25f);
 		enemie.setAiTimeToChangeDecision(0.9f);
@@ -547,10 +572,10 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 			enemie.setWalkingParticleEffectScale(1.7f);
 			enemie.setGettingHitParticleEffectScale(1.7f);
 			// AI properties
-			// 2: Hostile spawner random walking AI: the enemie will either stay idle or walk around randomly
+			// 2: Hostile spawner random walkingAnimation AI: the enemie will either stay idle or walk around randomly
 			enemie.setEnemieId(1002);
 			enemie.setAiType(1);
-			enemie.setHostileRange(250f);
+			enemie.setHostileRange(350f);
 			enemie.setPlayer(player);
 			enemie.setAiTimeToAction(0.25f);
 			enemie.setAiTimeToChangeDecision(0.9f);
@@ -662,6 +687,16 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 				zOrderableSpriteList.remove(enemie);
 			}
 		}
+
+		// Remove "dead" lights
+		Iterator<Light> lightIterator= lightArrayList.iterator();
+		while(lightIterator.hasNext()) {
+			Light light = lightIterator.next();
+			if(light.isDead()) {
+				lightIterator.remove();
+				lightArrayList.remove(light);
+			}
+		}
 	}
 
 	// Update lights
@@ -705,7 +740,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 			}
 		}
 		// Update player
-		player.update(projectileList, zOrderableSpriteList);
+		player.update(projectileList, zOrderableSpriteList, lightArrayList);
 		// Update camera
 		camera.position.set(player.getHitbox().getCenterX(), player.getHitbox().getCenterY(), 0);
 		if(camera.position.x < camera.viewportWidth/2) {

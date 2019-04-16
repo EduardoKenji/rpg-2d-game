@@ -14,13 +14,22 @@ public class Light {
     float animationAmount = 0;
     final float animationThreshold = 10;
     int mode = 0;
+    // Removable light such as temporary fires and flammables
+    boolean removable;
+    float maximumRange;
+    float lifeTimeTimer;
+    boolean dead;
 
-    public Light(Sprite lightSprite, Rectangle rectangleBoundaries) {
+    public Light(Sprite lightSprite, Rectangle rectangleBoundaries, boolean removable, float maximumRange) {
         this.lightSprite = lightSprite;
         this.rectangleBoundaries = rectangleBoundaries;
         // Set light sprite to respect rectangle boundaries position
         lightSprite.setPosition(rectangleBoundaries.getX(), rectangleBoundaries.getY());
         lightSprite.setSize(rectangleBoundaries.getWidth(), rectangleBoundaries.getHeight());
+        lifeTimeTimer = 0;
+        dead = false;
+        this.removable = removable;
+        this.maximumRange = maximumRange;
     }
 
     public void draw(SpriteBatch spriteBatch) {
@@ -52,9 +61,35 @@ public class Light {
                 }
             }
             timer = 0f;
-            lightSprite.setPosition(rectangleBoundaries.getX(), rectangleBoundaries.getY());
-            lightSprite.setSize(rectangleBoundaries.getWidth(), rectangleBoundaries.getHeight());
         }
+
+        lightSprite.setPosition(rectangleBoundaries.getX(), rectangleBoundaries.getY());
+        lightSprite.setSize(rectangleBoundaries.getWidth(), rectangleBoundaries.getHeight());
+    }
+
+    void updateDistance() {
+        if(removable) {
+            lifeTimeTimer += Gdx.graphics.getDeltaTime();
+            if(lifeTimeTimer > maximumRange) {
+                dead = true;
+            }
+        }
+    }
+
+    public boolean isDead() {
+        return dead;
+    }
+
+    public void setDead(boolean dead) {
+        this.dead = dead;
+    }
+
+    public float getMaximumRange() {
+        return maximumRange;
+    }
+
+    public void setMaximumRange(float maximumRange) {
+        this.maximumRange = maximumRange;
     }
 
     public Sprite getLightSprite() {

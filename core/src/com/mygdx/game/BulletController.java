@@ -19,6 +19,13 @@ public class BulletController {
     int entityId;
     // Bullet damage
     int damage;
+    int minDamageOffset, maxDamageOffset;
+    int range;
+    // Light texture
+	Texture lightTexture;
+	ArrayList<Light> lightList;
+	// Particle effect
+	String attackParticleEffectPath, attackParticleEffectFolderPath;
 
     public BulletController(float angle, int shootingPattern, int damage) {
         this.angle = angle;
@@ -40,8 +47,10 @@ public class BulletController {
             for(int i = -15; i < 16; i+=15) {
                 Sprite bulletSprite = new Sprite(projectileTexture);
                 Sprite bulletShadowSprite = new Sprite(projectileShadowTexture);
-                Bullet bulletShadow = new Bullet(bulletShadowSprite,bulletShadowHitbox, projectileSpeed, projectileLifeTime, damage,angle+i, entityId, null);
-				Bullet bullet = new Bullet(bulletSprite, bulletHitbox, projectileSpeed, projectileLifeTime, damage,angle+i, entityId, bulletShadow);
+                Bullet bulletShadow = new Bullet(bulletShadowSprite,bulletShadowHitbox, projectileSpeed, projectileLifeTime,
+                        (damage+minDamageOffset)+(int)(Math.random()*range),angle+i, entityId, null, bulletHitbox.getY()-2);
+				Bullet bullet = new Bullet(bulletSprite, bulletHitbox, projectileSpeed, projectileLifeTime, (damage+minDamageOffset)+(int)(Math.random()*range),
+                        angle+i, entityId, bulletShadow, bulletHitbox.getY());
                 projectileList.add(bullet);
                 projectileList.add(bulletShadow);
                 zOrderableSpriteList.add(bullet);
@@ -54,13 +63,104 @@ public class BulletController {
         if(rotateProjectile) {
             Sprite bulletSprite = new Sprite(projectileTexture);
             Sprite bulletShadowSprite = new Sprite(projectileShadowTexture);
-			Bullet bulletShadow = new Bullet(bulletShadowSprite,bulletShadowHitbox, projectileSpeed, projectileLifeTime, damage, angle, entityId, null);
-            Bullet bullet = new Bullet(bulletSprite, bulletHitbox, projectileSpeed, projectileLifeTime, damage, angle, entityId, bulletShadow);
+			Bullet bulletShadow = new Bullet(bulletShadowSprite,bulletShadowHitbox, projectileSpeed, projectileLifeTime, (damage+minDamageOffset)+(int)(Math.random()*range),
+                    angle, entityId, null, bulletHitbox.getY()-2);
+            Bullet bullet = new Bullet(bulletSprite, bulletHitbox, projectileSpeed, projectileLifeTime, (damage+minDamageOffset)+(int)(Math.random()*range),
+                    angle, entityId, bulletShadow, bulletHitbox.getY());
+			if(lightTexture != null) {
+				bullet.createLight(lightTexture, lightList, 25, 0, 0);
+			}
+			if(attackParticleEffectPath != null && attackParticleEffectFolderPath != null) {
+				bullet.createParticleEffect(attackParticleEffectPath, attackParticleEffectFolderPath, 13f);
+			}
             projectileList.add(bullet);
             projectileList.add(bulletShadow);
             zOrderableSpriteList.add(bullet);
             zOrderableSpriteList.add(bulletShadow);
         }
+    }
+
+	public void setAttackParticleEffectPath(String attackParticleEffectPath) {
+		this.attackParticleEffectPath = attackParticleEffectPath;
+	}
+
+	public void setDamageRange(int minDamageOffset, int maxDamageOffset) {
+        this.minDamageOffset = minDamageOffset;
+        this.maxDamageOffset = maxDamageOffset;
+        range = (maxDamageOffset+damage)-(minDamageOffset+damage)+1;
+    }
+
+	public String getAttackParticleEffectPath() {
+		return attackParticleEffectPath;
+	}
+
+	public void setAttackParticleEffect(String attackParticleEffectPath) {
+		this.attackParticleEffectPath = attackParticleEffectPath;
+	}
+
+	public String getAttackParticleEffectFolderPath() {
+		return attackParticleEffectFolderPath;
+	}
+
+	public void setAttackParticleEffectFolderPath(String attackParticleEffectFolderPath) {
+		this.attackParticleEffectFolderPath = attackParticleEffectFolderPath;
+	}
+
+	public int getDamage() {
+        return damage;
+    }
+
+    public void setDamage(int damage) {
+        this.damage = damage;
+    }
+
+    public int getMinDamageOffset() {
+        return minDamageOffset;
+    }
+
+    public void setMinDamageOffset(int minDamageOffset) {
+        this.minDamageOffset = minDamageOffset;
+    }
+
+    public int getMaxDamageOffset() {
+        return maxDamageOffset;
+    }
+
+	public Sprite getBulletSprite() {
+		return bulletSprite;
+	}
+
+	public void setBulletSprite(Sprite bulletSprite) {
+		this.bulletSprite = bulletSprite;
+	}
+
+	public Sprite getBulletShadowSprite() {
+		return bulletShadowSprite;
+	}
+
+	public void setBulletShadowSprite(Sprite bulletShadowSprite) {
+		this.bulletShadowSprite = bulletShadowSprite;
+	}
+
+	public int getRange() {
+		return range;
+	}
+
+	public void setRange(int range) {
+		this.range = range;
+	}
+
+	public Texture getLightTexture() {
+		return lightTexture;
+	}
+
+	public void setLightTexture(Texture lightTexture, ArrayList<Light> lightList) {
+		this.lightTexture = lightTexture;
+		this.lightList = lightList;
+	}
+
+	public void setMaxDamageOffset(int maxDamageOffset) {
+        this.maxDamageOffset = maxDamageOffset;
     }
 
     public Texture getProjectileTexture() {
