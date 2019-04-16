@@ -58,6 +58,8 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 	GameMap gameMap;
 	// Show last attacked enemie status
 	ScreenTargetStatus screenTargetStatus;
+	// Climate
+	Climate climate;
 
 	final float gettingDamageThreshold = 0.32f;
 
@@ -93,17 +95,17 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		frameBuffer = new FrameBuffer(Pixmap.Format.RGBA8888, Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), false);
 
 		// Create and configure camera
-		camera=new OrthographicCamera();
-		camera.setToOrtho(false,Gdx.graphics.getWidth(),Gdx.graphics.getHeight());
+		camera = new OrthographicCamera();
+		camera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 		camera.viewportHeight = 600;
 		camera.viewportWidth = 800;
 		guiCamera = new OrthographicCamera();
-		guiCamera.setToOrtho(false,Gdx.graphics.getWidth(),Gdx.graphics.getHeight());
+		guiCamera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 		guiCamera.viewportHeight = 600;
 		guiCamera.viewportWidth = 800;
 
 		// Initialize sprite batch
-		spriteBatch=new SpriteBatch();
+		spriteBatch = new SpriteBatch();
 
 		//lightArrayList.add(new Light(new Sprite(new Texture("textures/fire_light.png")), new Rectangle(130, 100, 400, 400)));
 		//lightArrayList.add(new Light(new Sprite(new Texture("textures/blue_light.png")), new Rectangle(600, 200, 70, 70)));
@@ -112,25 +114,25 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		// Debug sprite to test depth calculation for sprites
 
 		// Create gameMap
-		gameMap = new GameMap(1 , 10000, 10000, 0, 0);
+		gameMap = new GameMap(1, 10000, 10000, 0, 0);
 
 		// Fill map object list
 		fillMapObjectList();
 
-        Texture hpBarsTextures[] = new Texture[3];
-        hpBarsTextures[0] = new Texture("hp_bars/black_bar.png");
-        hpBarsTextures[1] = new Texture("hp_bars/green_bar.png");
-        hpBarsTextures[2] = new Texture("hp_bars/blue_bar.png");
+		Texture hpBarsTextures[] = new Texture[3];
+		hpBarsTextures[0] = new Texture("hp_bars/black_bar.png");
+		hpBarsTextures[1] = new Texture("hp_bars/green_bar.png");
+		hpBarsTextures[2] = new Texture("hp_bars/blue_bar.png");
 
 		player = new Player(new Rectangle(315, 212.5f, 33, 56), 5);
 		player.setScreenToViewport(camera.viewportWidth, camera.viewportHeight);
 		player.setGettingHitParticleEffectScale(1.3f);
 		player.setMapHitbox(new Rectangle(315, 212.5f, 33, 22));
-        HpBar hpBar = new HpBar( new Rectangle(315, 205.5f, 33, 56), hpBarsTextures);
-        player.setHpBar(hpBar);
-        player.setCurrentHp(90);
-        player.setMaximumHp(90);
-        player.setBaseDamage(20);
+		HpBar hpBar = new HpBar(new Rectangle(315, 205.5f, 33, 56), hpBarsTextures);
+		player.setHpBar(hpBar);
+		player.setCurrentHp(90);
+		player.setMaximumHp(90);
+		player.setBaseDamage(20);
 		zOrderableSpriteList.add(player);
 		// Add player hitbox to the gameMap
 		//gameMap.updateHitbox(player.getMapHitbox(), 1);
@@ -138,8 +140,8 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		player.setGameMap(gameMap);
 
 		// Day night cycle starts at 12:00 A.M.
-		dayNightCycle = new DayNightCycle(17, 30);
-		dayNightCycle.setCurrentTimeText(new StaticText("",camera.position.x-375, camera.position.y+275, false));
+		dayNightCycle = new DayNightCycle(15, 30);
+		dayNightCycle.setCurrentTimeText(new StaticText("", camera.position.x - 375, camera.position.y + 275, false));
 
 		// Projectile list
 		projectileList = new ArrayList<Bullet>();
@@ -153,11 +155,13 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		// Fill enemie list
 		fillEnemieList();
 
-		for(Enemie enemie: enemieList) {
+		for (Enemie enemie : enemieList) {
 			enemie.setGameMap(gameMap);
 		}
 
 		screenTargetStatus = new ScreenTargetStatus(new Rectangle(250, 580, 300, 20), hpBarsTextures);
+
+		climate = new Climate("snow", 0, Gdx.graphics.getHeight()/2);
 
 		Gdx.input.setInputProcessor(this);
 
@@ -234,6 +238,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		ground = new Texture("textures/new_ground.png");
 
 		//paintWithMossAspect("map_objects/chest_sample.png", "map_objects/moss_chest.png", 2);
+
 	}
 
 	public static void paintWithMossAspect(String inputPath, String outputPath, int squareSize) {
@@ -675,6 +680,8 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		// Update target status from last enemy engaged
 		screenTargetStatus.update();
 		screenTargetStatus.updatePosition(guiCamera.position.x-150, guiCamera.position.y+280);
+		// Update climate
+		climate.update(camera.position.x-300, camera.position.y);
 		// Update map objects (update particle effects)
 		for(MapObject mapObject : mapObjectList) {
 			mapObject.update();
@@ -745,6 +752,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 				}
 			}
 		}
+		climate.draw(spriteBatch);
 		// Debug draw map
 		//gameMap.draw(spriteBatch, player);
 		spriteBatch.end();
