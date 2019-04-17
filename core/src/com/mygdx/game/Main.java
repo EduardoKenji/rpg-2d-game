@@ -186,6 +186,12 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 
 		screenTargetStatus = new ScreenTargetStatus(new Rectangle(250, 580, 300, 20), hpBarsTextures);
 
+		hpBarsTextures = new Texture[4];
+		hpBarsTextures[0] = new Texture("hp_bars/black_bar.png");
+		hpBarsTextures[1] = new Texture("hp_bars/green_bar.png");
+		hpBarsTextures[2] = new Texture("hp_bars/shield_bar.png");
+		hpBarsTextures[3] = new Texture("hp_bars/blue_bar.png");
+
 		climate = new Climate("snow", 0, Gdx.graphics.getHeight()/2);
 
 		Gdx.input.setInputProcessor(this);
