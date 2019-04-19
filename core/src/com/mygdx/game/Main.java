@@ -35,7 +35,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 	// Player
 	Player player;
 	// Font used to draw text on screen
-	BitmapFont font;
+	BitmapFont font, hpFont, manaFont;
 	// Map with colors (k: Color name, v: RGBA values)
 	HashMap<String, Color> colorHashMap;
 	// Array list with lights
@@ -60,6 +60,8 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 	ScreenTargetStatus screenTargetStatus;
 	// Climate
 	Climate climate;
+	// Show player hp, mana and experience bars
+	ScreenPlayerStatus screenPlayerStatus;
 
 	final float gettingDamageThreshold = 0.32f;
 
@@ -73,6 +75,12 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		// Create font
 		font = new BitmapFont(Gdx.files.internal("fonts/lilliput.fnt"), false);
 		font.setUseIntegerPositions(false);
+
+		hpFont = new BitmapFont(Gdx.files.internal("fonts/lilliput_20_hp.fnt"), false);
+		hpFont.setUseIntegerPositions(false);
+
+		manaFont = new BitmapFont(Gdx.files.internal("fonts/lilliput_20_mana.fnt"), false);
+		manaFont.setUseIntegerPositions(false);
 
 		// Initialize light array list
 		lightArrayList = new ArrayList<Light>();
@@ -133,7 +141,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 				3, 10,
 				-2, 3, 0.3f,
 				90, 90,
-				50, 50,
+				0, 0,
 				 200, 200);
 
 		PlayerClass knight = new PlayerClass("characters/player/knight_walking.png",
@@ -166,7 +174,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 
 		// Day night cycle starts at 12:00 A.M.
 		dayNightCycle = new DayNightCycle(20, 30);
-		dayNightCycle.setCurrentTimeText(new StaticText("", camera.position.x - 375, camera.position.y + 275, false));
+		dayNightCycle.setCurrentTimeText(new StaticText("", 80, Gdx.graphics.getHeight() - 40, false));
 
 		// Projectile list
 		projectileList = new ArrayList<Bullet>();
@@ -184,13 +192,15 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 			enemie.setGameMap(gameMap);
 		}
 
-		screenTargetStatus = new ScreenTargetStatus(new Rectangle(250, 580, 300, 20), hpBarsTextures);
+		screenTargetStatus = new ScreenTargetStatus(new Rectangle(250, Gdx.graphics.getHeight() - 20, 460, 20), hpBarsTextures);
 
 		hpBarsTextures = new Texture[4];
 		hpBarsTextures[0] = new Texture("hp_bars/black_bar.png");
-		hpBarsTextures[1] = new Texture("hp_bars/green_bar.png");
+		hpBarsTextures[1] = new Texture("hp_bars/red_bar.png");
 		hpBarsTextures[2] = new Texture("hp_bars/shield_bar.png");
 		hpBarsTextures[3] = new Texture("hp_bars/blue_bar.png");
+
+		screenPlayerStatus = new ScreenPlayerStatus(new Rectangle(40, 40, 150, 25), hpBarsTextures, player);
 
 		climate = new Climate("snow", 0, Gdx.graphics.getHeight()/2);
 
@@ -717,10 +727,12 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		// Update Day/Night cycle
 		dayNightCycle.updateTime();
 		dayNightCycle.updateRGBValues();
-		dayNightCycle.updateText(guiCamera.position.x-375, guiCamera.position.y+275);
+		dayNightCycle.updateText();
 		// Update target status from last enemy engaged
 		screenTargetStatus.update();
-		screenTargetStatus.updatePosition(guiCamera.position.x-150, guiCamera.position.y+280);
+		//screenTargetStatus.updatePosition(guiCamera.position.x-150, guiCamera.position.y+280);
+		// Update player window
+		screenPlayerStatus.update();
 		// Update climate
 		climate.update(camera.position.x-300, camera.position.y);
 		// Update map objects (update particle effects)
@@ -856,6 +868,7 @@ public class Main extends ApplicationAdapter implements InputProcessor {
 		spriteBatch.begin();
 		dayNightCycle.draw(spriteBatch, font);
 		screenTargetStatus.draw(spriteBatch, font);
+		screenPlayerStatus.draw(spriteBatch, hpFont, manaFont);
 		spriteBatch.end();
 	}
 

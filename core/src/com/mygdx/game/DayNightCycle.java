@@ -41,7 +41,7 @@ public class DayNightCycle {
         currentTimeText.draw(spriteBatch, font);
     }
 
-    public void updateText(float x, float y) {
+    public void updateText() {
 		if(currentTimeText != null) {
 			String twoDigitHours = ""+hours;
 			if(this.hours < 10) {
@@ -53,8 +53,10 @@ public class DayNightCycle {
 			}
 			currentTimeText.setText(twoDigitHours+":"+twoDigitMinutes);
 		}
+		/*
 		currentTimeText.setX(x);
 		currentTimeText.setY(y);
+		*/
 	}
 
     public void updateRGBValues() {

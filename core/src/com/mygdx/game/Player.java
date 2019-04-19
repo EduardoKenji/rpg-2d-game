@@ -448,6 +448,8 @@ public class Player extends ZOrderableSprite {
     	gettingHitParticleEffect.reset();
 	}
 
+
+
     public HpBar getHpBar() {
         return hpBar;
     }

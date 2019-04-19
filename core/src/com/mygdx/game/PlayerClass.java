@@ -133,6 +133,9 @@ public class PlayerClass {
 
 	public void setCurrentHp(float currentHp) {
 		this.currentHp = currentHp;
+		if(this.currentHp < 0) {
+			this.currentHp = 0;
+		}
 	}
 
 	public float getMaximumHp() {
